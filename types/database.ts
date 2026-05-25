@@ -1,4 +1,4 @@
-export interface Profile {
+export type Profile = {
   id: string
   username: string
   display_name: string
@@ -6,7 +6,7 @@ export interface Profile {
   created_at: string
 }
 
-export interface Event {
+export type Event = {
   id: string
   slug: string
   host_id: string
@@ -23,7 +23,7 @@ export interface Event {
   created_at: string
 }
 
-export interface Registration {
+export type Registration = {
   id: string
   event_id: string
   user_id: string
@@ -31,24 +31,44 @@ export interface Registration {
   created_at: string
 }
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
         Row: Profile
-        Insert: Omit<Profile, 'created_at'>
+        Insert: Omit<Profile, 'id' | 'created_at'>
         Update: Partial<Omit<Profile, 'id' | 'created_at'>>
+        Relationships: []
       }
       events: {
         Row: Event
-        Insert: Omit<Event, 'id' | 'created_at'>
+        Insert: Omit<Event, 'id' | 'created_at' | 'is_public' | 'status'> & {
+          is_public?: boolean
+          status?: 'draft' | 'published' | 'cancelled'
+        }
         Update: Partial<Omit<Event, 'id' | 'created_at'>>
+        Relationships: []
       }
       registrations: {
         Row: Registration
-        Insert: Omit<Registration, 'id' | 'created_at'>
+        Insert: Omit<Registration, 'id' | 'created_at' | 'status'> & {
+          status?: 'confirmed' | 'cancelled'
+        }
         Update: Partial<Omit<Registration, 'id' | 'created_at'>>
+        Relationships: []
       }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }

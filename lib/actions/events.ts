@@ -33,19 +33,18 @@ export async function createEvent(formData: FormData) {
         ? Number(formData.get('capacity'))
         : null,
       status: 'draft',
-    } as any)
+    })
     .select('slug')
     .single()
-    .returns<{ slug: string }>()
 
   if (error) return { error: error.message }
 
   revalidatePath('/dashboard')
-  redirect(`/events/${(data as any)?.slug}/manage`)
+  redirect(`/events/${data?.slug}/manage`)
 }
 
 export async function updateEvent(slug: string, formData: FormData) {
-  const supabase = await createClient() as any
+  const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -79,7 +78,7 @@ export async function updateEvent(slug: string, formData: FormData) {
 }
 
 export async function publishEvent(slug: string) {
-  const supabase = await createClient() as any
+  const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -98,7 +97,7 @@ export async function publishEvent(slug: string) {
 }
 
 export async function cancelEvent(slug: string) {
-  const supabase = await createClient() as any
+  const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

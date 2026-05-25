@@ -16,6 +16,7 @@ interface EventFormProps {
 export function EventForm({ mode, initialData, slug }: EventFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [locationName, setLocationName] = useState(initialData?.location_name ?? '')
+  const [locationAddress, setLocationAddress] = useState(initialData?.location_address ?? '')
   const [startsAt, setStartsAt] = useState(
     initialData?.starts_at
       ? new Date(initialData.starts_at).toISOString().slice(0, 16)
@@ -26,6 +27,7 @@ export function EventForm({ mode, initialData, slug }: EventFormProps) {
       ? new Date(initialData.ends_at).toISOString().slice(0, 16)
       : ''
   )
+  const [capacity, setCapacity] = useState(initialData?.capacity?.toString() ?? '')
   const [coverImageUrl, setCoverImageUrl] = useState(
     initialData?.cover_image_url ?? ''
   )
@@ -192,6 +194,8 @@ export function EventForm({ mode, initialData, slug }: EventFormProps) {
           <input
             name="location_address"
             type="text"
+            value={locationAddress}
+            onChange={(e) => setLocationAddress(e.target.value)}
             placeholder="Full address (for map embed)"
             className="w-full bg-[#111] border border-[#2d2d2d] text-white text-sm px-4 py-2.5 rounded-lg placeholder:text-[#4b5563] focus:outline-none focus:border-[#6366f1]"
           />
@@ -206,7 +210,8 @@ export function EventForm({ mode, initialData, slug }: EventFormProps) {
             name="capacity"
             type="number"
             min="1"
-            defaultValue={initialData?.capacity ?? ''}
+            value={capacity}
+            onChange={(e) => setCapacity(e.target.value)}
             placeholder="Unlimited"
             className="w-full bg-[#111] border border-[#2d2d2d] text-white text-sm px-4 py-2.5 rounded-lg placeholder:text-[#4b5563] focus:outline-none focus:border-[#6366f1]"
           />

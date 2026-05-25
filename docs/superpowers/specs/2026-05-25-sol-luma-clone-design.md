@@ -20,6 +20,7 @@ Sol is an open-source event management web app — a Luma clone. Hosts create an
 | Database | Supabase (Postgres) | Free tier, typed client, RLS, Storage for images |
 | Auth | Supabase Auth | Built-in Google + GitHub OAuth; no extra auth library needed |
 | Styling | Tailwind CSS | Utility-first, fast iteration |
+| Rich text | Tiptap | Description editor in event form |
 | Deploy | Vercel | Free tier, zero config with Next.js |
 
 No Prisma, no tRPC, no NextAuth — Supabase-native stack throughout.
@@ -124,11 +125,11 @@ Auto-created via Postgres trigger on `auth.users` insert.
 - Nav: logo left, Discover link, "+ Create Event" CTA, Sign In right
 - Hero: centered headline with gradient text, two CTAs (Create / Browse)
 - Events grid: 3-column card grid, each card shows cover gradient, date, title, host avatar+name, RSVP count
-- Search bar above grid
+- Search bar above grid — client-side filter by event title on the loaded set (no separate search API in v1)
 
 ### Event Page (`/events/[slug]`)
 Matches Luma's two-column layout:
-- **Left column (wider):** cover image (full width of column, rounded), host avatar + "Presented by" + host name + Contact Host button, category tag, event title, date/time row, location row, About Event section, Location section with map embed
+- **Left column (wider):** cover image (full width of column, rounded), host avatar + "Presented by" + host name + Contact Host button (mailto: link to host email), event title, date/time row, location row, About Event section, Location section (Google Maps iframe embed using `location_address`)
 - **Right column (sticky):** countdown, RSVP card with register button + attendee avatars + count + spots remaining, registration form (name + email pre-filled from profile) when user clicks Register
 
 ### Create Event (`/events/new`)

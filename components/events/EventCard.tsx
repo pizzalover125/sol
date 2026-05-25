@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Event, Profile } from '@/types/database'
 
 export type EventWithHost = Event & {
-  profiles: Pick<Profile, 'display_name' | 'avatar_url'>
+  profiles: Pick<Profile, 'id' | 'display_name' | 'avatar_url'>
 }
 
 interface EventCardProps {

@@ -8,7 +8,7 @@ export default async function HomePage() {
 
   const { data: events } = await supabase
     .from('events')
-    .select('*, profiles:host_id (display_name, avatar_url)')
+    .select('*, profiles:host_id (id, display_name, avatar_url)')
     .eq('status', 'published')
     .eq('is_public', true)
     .order('starts_at', { ascending: true })

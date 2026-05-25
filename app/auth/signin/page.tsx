@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SignInButtons } from '@/components/auth/SignInButtons'
+import { safeRedirect } from '@/lib/utils/safe-redirect'
 
 export default async function SignInPage({
   searchParams,
@@ -13,7 +14,7 @@ export default async function SignInPage({
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (user) redirect(redirectTo ?? '/dashboard')
+  if (user) redirect(safeRedirect(redirectTo))
 
   return (
     <main className="min-h-[80vh] flex items-center justify-center px-4">

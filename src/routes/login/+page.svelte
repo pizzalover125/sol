@@ -2,8 +2,12 @@
   import { supabase } from '$lib/supabase'
   import { goto } from '$app/navigation'
 
+  let mode = $state('signin') // 'signin' | 'signup'
   let email = $state('')
   let password = $state('')
+  let firstName = $state('')
+  let lastName = $state('')
+  let avatarUrl = $state('')
   let error = $state('')
   let loading = $state(false)
 
@@ -15,29 +19,71 @@
   }
 
   async function signUp() {
+    if (!firstName.trim() || !lastName.trim()) {
+      error = 'First and last name are required.'
+      return
+    }
     loading = true
-    const { error: e } = await supabase.auth.signUp({ email, password })
+    const { error: e } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          avatar_url: avatarUrl.trim()
+        }
+      }
+    })
     if (e) { error = e.message; loading = false }
     else goto('/')
+  }
+
+  function submit() {
+    error = ''
+    mode === 'signin' ? signIn() : signUp()
+  }
+
+  function toggleMode() {
+    error = ''
+    mode = mode === 'signin' ? 'signup' : 'signin'
   }
 </script>
 
 <div class="auth-page">
   <div class="auth-card">
     <div class="logo">●</div>
-    <h1>Welcome</h1>
-    <p class="sub">Sign in or create an account to manage your events.</p>
+    <h1>{mode === 'signin' ? 'Welcome back' : 'Create your account'}</h1>
+    <p class="sub">
+      {mode === 'signin'
+        ? 'Sign in to manage your events.'
+        : 'Tell us a little about yourself to get started.'}
+    </p>
 
     {#if error}<div class="error">{error}</div>{/if}
+
+    {#if mode === 'signup'}
+      <div class="row">
+        <input type="text" bind:value={firstName} placeholder="First name" />
+        <input type="text" bind:value={lastName} placeholder="Last name" />
+      </div>
+    {/if}
 
     <input type="email" bind:value={email} placeholder="Email" />
     <input type="password" bind:value={password} placeholder="Password" />
 
-    <button class="primary" onclick={signIn} disabled={loading}>
-      {loading ? 'Loading…' : 'Sign In'}
+    {#if mode === 'signup'}
+      <input type="url" bind:value={avatarUrl} placeholder="Profile picture URL (optional)" />
+      <p class="hint">Leave blank and we'll generate an avatar from your initials.</p>
+    {/if}
+
+    <button class="primary" onclick={submit} disabled={loading}>
+      {loading ? 'Loading…' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
     </button>
-    <button class="text-btn" onclick={signUp} disabled={loading}>
-      Don't have an account? <span>Sign Up</span>
+
+    <button class="text-btn" onclick={toggleMode}>
+      {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}
+      <span>{mode === 'signin' ? 'Sign Up' : 'Sign In'}</span>
     </button>
   </div>
 </div>
@@ -67,7 +113,7 @@
     text-align: center;
   }
   h1 {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: -0.02em;
     text-align: center;
@@ -78,6 +124,14 @@
     color: var(--text-muted);
     text-align: center;
     margin: 0 0 8px;
+  }
+  .row {
+    display: flex;
+    gap: 10px;
+  }
+  .row input {
+    flex: 1;
+    min-width: 0;
   }
   input {
     background: rgba(255, 255, 255, 0.03);
@@ -94,6 +148,11 @@
   }
   input::placeholder {
     color: rgba(255, 255, 255, 0.35);
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: -6px 0 0;
   }
   .primary {
     background: var(--accent);
@@ -134,3 +193,4 @@
     font-size: 14px;
   }
 </style>
+

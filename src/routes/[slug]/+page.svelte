@@ -1,10 +1,10 @@
 <script>
+  import { marked } from 'marked'
+
   let { data } = $props()
   const { event } = data
 
-  // TODO: Add host_name, host_avatar_url to user model and add category to event creation form + DB
   const hostName = 'The Code Hatch'
-  const category = 'Tech'
 
   const start = new Date(event.start_time)
   const end = new Date(event.end_time)
@@ -25,7 +25,9 @@
     ? `https://maps.google.com/maps?q=${encodeURIComponent(event.location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`
     : ''
 
-  const hostInitials = hostName.split(' ').map((w) => w[0]).slice(0, 2).join('')
+  const descriptionHtml = event.description
+    ? marked(event.description, { breaks: true })
+    : ''
 </script>
 
 <svelte:head>
@@ -50,21 +52,27 @@
             <div class="cover-fallback">{event.name[0]}</div>
           {/if}
         </div>
-
-        <!-- TODO add host card to DB-->
          
-        <!-- <div class="host-card">
-          <div class="host-label">Presented by</div>
-          <div class="host-row">
-            <div class="host-avatar">{hostInitials}</div>
-            <span class="host-name">{hostName}</span>
+        {#if event.profile}
+          <div class="host-card">
+            <div class="host-label">Presented by</div>
+            <div class="host-row">
+              {#if event.profile.avatar_url}
+                <img class="host-avatar" style="object-fit: cover;" src={event.profile.avatar_url} alt="Host Avatar" />
+              {:else}
+                <div class="host-avatar">
+                  {((event.profile.first_name?.[0] ?? '') + (event.profile.last_name?.[0] ?? '')).toUpperCase()}
+                </div>
+              {/if}
+              <span class="host-name">
+                {event.profile.first_name ?? 'Unknown'} {event.profile.last_name ?? ''}
+              </span>
+            </div>
           </div>
-        </div> -->
+        {/if}
       </aside>
 
       <section class="content">
-        // TODO: Add category to DB and display it -->
-        <!-- <span class="pill">{category}</span> -->
         <h1 class="title">{event.name}</h1>
 
         <div class="meta">
@@ -95,25 +103,13 @@
           {/if}
         </div>
 
-        // TODO: Add registration to DB
-        <!-- <div class="reg-card">
-          <div class="reg-header">Registration</div>
-          <div class="reg-body">
-            {#if event.max_attendees}
-              <div class="spots">{event.max_attendees} spots available</div>
-            {/if}
-            <p class="reg-text">Welcome! To join the event, please register below.</p>
-            <button class="register-btn">Register</button>
-          </div>
-        </div> -->
-
         <div class="section">
           <div class="section-head">
             <span>About Event</span>
             <div class="rule"></div>
           </div>
-          {#if event.description}
-            <div class="about">{event.description}</div>
+          {#if descriptionHtml}
+            <div class="about">{@html descriptionHtml}</div>
           {/if}
         </div>
 
@@ -268,16 +264,6 @@
   .content {
     min-width: 0;
   }
-  .pill {
-    display: inline-block;
-    font-size: 13px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.85);
-    background: rgba(255, 255, 255, 0.08);
-    padding: 5px 12px;
-    border-radius: 999px;
-    margin-bottom: 16px;
-  }
   .title {
     font-size: 34px;
     font-weight: 700;
@@ -349,50 +335,6 @@
     color: rgba(255, 255, 255, 0.5);
   }
 
-  .reg-card {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    overflow: hidden;
-    margin-bottom: 36px;
-    background: rgba(255, 255, 255, 0.02);
-  }
-  .reg-header {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 12px 18px;
-    font-size: 14px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.85);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-  .reg-body {
-    padding: 18px;
-  }
-  .spots {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 10px;
-  }
-  .reg-text {
-    font-size: 15px;
-    color: rgba(255, 255, 255, 0.8);
-    margin: 0 0 16px;
-  }
-  .register-btn {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 9px;
-    background: #f5542d;
-    color: #fff;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .register-btn:hover {
-    background: #e0481f;
-  }
-
   .section {
     margin-bottom: 32px;
   }
@@ -413,12 +355,89 @@
     height: 1px;
     background: rgba(255, 255, 255, 0.1);
   }
+
+  /* Markdown-rendered description */
   .about {
     font-size: 15px;
     line-height: 1.65;
     color: rgba(255, 255, 255, 0.82);
-    white-space: pre-wrap;
   }
+  .about :global(p) {
+    margin: 0 0 12px;
+  }
+  .about :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .about :global(h1),
+  .about :global(h2),
+  .about :global(h3),
+  .about :global(h4) {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 20px 0 8px;
+    color: #fff;
+  }
+  .about :global(h1) { font-size: 20px; }
+  .about :global(h2) { font-size: 17px; }
+  .about :global(h3) { font-size: 15px; }
+  .about :global(ul),
+  .about :global(ol) {
+    margin: 8px 0 12px;
+    padding-left: 20px;
+  }
+  .about :global(li) {
+    margin-bottom: 4px;
+  }
+  .about :global(a) {
+    color: #f5542d;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .about :global(a:hover) {
+    color: #ff7a5c;
+  }
+  .about :global(strong) {
+    font-weight: 600;
+    color: #fff;
+  }
+  .about :global(em) {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .about :global(code) {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 5px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .about :global(pre) {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+  .about :global(pre code) {
+    background: none;
+    padding: 0;
+    font-size: 13px;
+  }
+  .about :global(blockquote) {
+    border-left: 3px solid #f5542d;
+    margin: 12px 0;
+    padding: 6px 0 6px 14px;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+  }
+  .about :global(hr) {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 20px 0;
+  }
+
   .location-name {
     font-size: 15px;
     font-weight: 500;
@@ -457,4 +476,3 @@
     }
   }
 </style>
-

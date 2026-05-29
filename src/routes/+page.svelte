@@ -2,11 +2,26 @@
   import { enhance } from '$app/forms'
   import { supabase } from '$lib/supabase'
   import { goto } from '$app/navigation'
+  import Avatar from '$lib/Avatar.svelte'
+  import { marked } from 'marked'
 
   let { data, form } = $props()
 
+  let profile = $derived(data.profile)
   let editing = $state(null)
   let showCreateForm = $state(false)
+
+  // Per-event live description state for the edit form
+  let editDescriptions = $state({})
+
+  function getEditDescription(event) {
+    return editDescriptions[event.id] ?? event.description ?? ''
+  }
+
+  function startEditing(event) {
+    editDescriptions[event.id] = event.description ?? ''
+    editing = event.id
+  }
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -31,6 +46,12 @@
   <header class="bar">
     <h1>My Events</h1>
     <div class="bar-actions">
+      {#if profile}
+        <div class="user-chip">
+          <Avatar firstName={profile.first_name} lastName={profile.last_name} url={profile.avatar_url} size={32} />
+          <span class="user-name">{profile.first_name} {profile.last_name}</span>
+        </div>
+      {/if}
       <button class="primary" onclick={() => showCreateForm = !showCreateForm}>
         {showCreateForm ? 'Cancel' : '+ New Event'}
       </button>
@@ -56,7 +77,9 @@
     >
       <h2>New Event</h2>
       <label>Event Name <input name="name" required /></label>
-      <label>Description <textarea name="description"></textarea></label>
+      <label>Description
+        <textarea name="description" placeholder="Supports **Markdown**"></textarea>
+      </label>
       <label>Location <input name="location" placeholder="Address or 'Online'" /></label>
       <div class="row">
         <label>Start <input name="start_time" type="datetime-local" required /></label>
@@ -94,7 +117,35 @@
           >
             <input type="hidden" name="id" value={event.id} />
             <label>Event Name <input name="name" value={event.name} required /></label>
-            <label>Description <textarea name="description">{event.description}</textarea></label>
+            
+            <div class="md-label-row">
+              <span class="field-label">Description</span>
+              <span class="md-badge">Markdown</span>
+            </div>
+            <div class="md-editor">
+              <div class="md-pane">
+                <div class="md-pane-label">Edit</div>
+                <textarea
+                  name="description"
+                  class="md-textarea"
+                  value={getEditDescription(event)}
+                  oninput={(e) => { editDescriptions[event.id] = e.target.value }}
+                  placeholder="Supports **bold**, _italic_, ## headings, - lists…"
+                ></textarea>
+              </div>
+              <div class="md-divider"></div>
+              <div class="md-pane">
+                <div class="md-pane-label">Preview</div>
+                <div class="md-preview">
+                  {#if getEditDescription(event).trim()}
+                    {@html marked(getEditDescription(event), { breaks: true })}
+                  {:else}
+                    <span class="md-empty">Nothing to preview yet…</span>
+                  {/if}
+                </div>
+              </div>
+            </div>
+
             <label>Location <input name="location" value={event.location ?? ''} /></label>
             <div class="row">
               <label>Start <input name="start_time" type="datetime-local" value={toInputValue(event.start_time)} required /></label>
@@ -136,9 +187,9 @@
               <div class="meta-line">📅 {formatEventDate(event.start_time, event.end_time)}</div>
               {#if event.location}<div class="meta-line">📍 {event.location}</div>{/if}
               {#if event.max_attendees}<div class="meta-line">👥 Max {event.max_attendees} attendees</div>{/if}
-              {#if event.description}<p class="desc">{event.description}</p>{/if}
+              <!-- description intentionally hidden in card view -->
               <div class="event-actions">
-                <button class="sm" onclick={() => editing = event.id}>Edit</button>
+                <button class="sm" onclick={() => startEditing(event)}>Edit</button>
                 <form method="POST" action="?/delete" use:enhance>
                   <input type="hidden" name="id" value={event.id} />
                   <button class="sm del" type="submit">Delete</button>
@@ -159,7 +210,6 @@
     padding: 28px 24px 80px;
   }
 
-  /* Header */
   .bar {
     display: flex;
     align-items: center;
@@ -174,10 +224,25 @@
   }
   .bar-actions {
     display: flex;
+    align-items: center;
     gap: 10px;
   }
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 4px 4px;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .user-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
 
-  /* Buttons */
   .primary {
     background: var(--accent);
     color: #fff;
@@ -229,7 +294,6 @@
     color: #ff8b6f;
   }
 
-  /* Panel / cards */
   .panel {
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -251,7 +315,6 @@
     gap: 14px;
   }
 
-  /* Forms */
   .form-grid {
     display: flex;
     flex-direction: column;
@@ -308,7 +371,126 @@
     accent-color: var(--accent);
   }
 
-  /* Event display */
+  .md-label-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .field-label {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .md-badge {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(245, 84, 45, 0.12);
+    border: 1px solid rgba(245, 84, 45, 0.25);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .md-editor {
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.02);
+    min-height: 180px;
+  }
+  .md-editor:focus-within {
+    border-color: var(--accent);
+  }
+  .md-pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 180px;
+  }
+  .md-pane-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.25);
+    padding: 8px 12px 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .md-divider {
+    background: var(--border);
+  }
+  .md-textarea {
+    flex: 1;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 12px !important;
+    color: #fff;
+    font-size: 13px !important;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace !important;
+    resize: none !important;
+    line-height: 1.6;
+    min-height: 140px;
+  }
+  .md-textarea:focus {
+    outline: none !important;
+    border-color: transparent !important;
+  }
+  .md-preview {
+    flex: 1;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.8);
+    overflow-y: auto;
+  }
+  .md-preview :global(p) { margin: 0 0 8px; }
+  .md-preview :global(p:last-child) { margin-bottom: 0; }
+  .md-preview :global(h1),
+  .md-preview :global(h2),
+  .md-preview :global(h3) {
+    font-weight: 600;
+    color: #fff;
+    margin: 12px 0 4px;
+  }
+  .md-preview :global(h1) { font-size: 16px; }
+  .md-preview :global(h2) { font-size: 14px; }
+  .md-preview :global(h3) { font-size: 13px; }
+  .md-preview :global(ul),
+  .md-preview :global(ol) {
+    margin: 4px 0 8px;
+    padding-left: 18px;
+  }
+  .md-preview :global(li) { margin-bottom: 2px; }
+  .md-preview :global(strong) { font-weight: 600; color: #fff; }
+  .md-preview :global(em) { font-style: italic; color: rgba(255,255,255,0.65); }
+  .md-preview :global(a) { color: #f5542d; text-decoration: underline; }
+  .md-preview :global(code) {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.08);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .md-preview :global(blockquote) {
+    border-left: 2px solid #f5542d;
+    margin: 8px 0;
+    padding: 4px 0 4px 10px;
+    color: rgba(255,255,255,0.55);
+    font-style: italic;
+  }
+  .md-preview :global(hr) {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin: 10px 0;
+  }
+  .md-empty {
+    color: rgba(255, 255, 255, 0.2);
+    font-style: italic;
+    font-size: 13px;
+  }
+
   .event-display {
     display: flex;
     gap: 16px;
@@ -390,15 +572,6 @@
     font-size: 13px;
     color: var(--text-muted);
   }
-  .desc {
-    font-size: 14px;
-    color: var(--text-dim);
-    margin: 4px 0 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
   .event-actions {
     display: flex;
     gap: 8px;
@@ -408,7 +581,15 @@
     display: inline-flex;
   }
 
-  /* Empty state */
+  .error {
+    background: rgba(245, 84, 45, 0.12);
+    border: 1px solid rgba(245, 84, 45, 0.4);
+    color: #ffb3a0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
   .empty {
     text-align: center;
     color: var(--text-muted);
@@ -425,6 +606,14 @@
     .thumb {
       width: 100%;
       height: 160px;
+    }
+    .md-editor {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1px auto;
+    }
+    .md-divider {
+      height: 1px;
+      width: 100%;
     }
   }
 </style>

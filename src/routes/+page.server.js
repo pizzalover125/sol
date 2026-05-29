@@ -10,7 +10,13 @@ export const load = async ({ locals }) => {
     .select("*")
     .order("start_time", { ascending: true });
 
-  return { events: events ?? [], session };
+  const { data: profile } = await locals.supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", session.user.id)
+    .maybeSingle();
+
+  return { events: events ?? [], profile, session };
 };
 
 export const actions = {
@@ -26,7 +32,6 @@ export const actions = {
       return fail(400, { error: "End time must be after start time" });
     }
 
-    // Generate a unique slug, retry if collision
     let slug;
     let attempts = 0;
     while (attempts < 5) {

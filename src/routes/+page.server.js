@@ -5,18 +5,72 @@ export const load = async ({ locals }) => {
   const session = await locals.getSession();
   if (!session) throw redirect(303, "/login");
 
+  const userId = session.user.id;
+
   const { data: events } = await locals.supabase
     .from("events")
     .select("*")
+    .eq("user_id", userId)
     .order("start_time", { ascending: true });
+
+  const ownEventIds = (events ?? []).map((e) => e.id);
+
+  let attendeesByEvent = {};
+  if (ownEventIds.length) {
+    const { data: regs } = await locals.supabase
+      .from("registrations")
+      .select("id, event_id, user_id, created_at, first_name, last_name, email")
+      .in("event_id", ownEventIds)
+      .order("created_at", { ascending: true });
+
+    const userIds = [
+      ...new Set((regs ?? []).map((r) => r.user_id).filter(Boolean)),
+    ];
+    let profilesById = {};
+    if (userIds.length) {
+      const { data: profs } = await locals.supabase
+        .from("profiles")
+        .select("id, first_name, last_name, avatar_url")
+        .in("id", userIds);
+      profilesById = Object.fromEntries((profs ?? []).map((p) => [p.id, p]));
+    }
+    for (const r of regs ?? []) {
+      (attendeesByEvent[r.event_id] ??= []).push({
+        ...r,
+        profile: profilesById[r.user_id] ?? null,
+      });
+    }
+  }
+
+  const { data: myRegs } = await locals.supabase
+    .from("registrations")
+    .select("event_id, created_at")
+    .eq("user_id", userId);
+
+  const regEventIds = (myRegs ?? []).map((r) => r.event_id);
+  let registeredEvents = [];
+  if (regEventIds.length) {
+    const { data: regEvents } = await locals.supabase
+      .from("events")
+      .select("*")
+      .in("id", regEventIds)
+      .order("start_time", { ascending: true });
+    registeredEvents = regEvents ?? [];
+  }
 
   const { data: profile } = await locals.supabase
     .from("profiles")
     .select("*")
-    .eq("id", session.user.id)
+    .eq("id", userId)
     .maybeSingle();
 
-  return { events: events ?? [], profile, session };
+  return {
+    events: events ?? [],
+    attendeesByEvent,
+    registeredEvents,
+    profile,
+    session,
+  };
 };
 
 export const actions = {
@@ -94,5 +148,38 @@ export const actions = {
   delete: async ({ request, locals }) => {
     const form = await request.formData();
     await locals.supabase.from("events").delete().eq("id", form.get("id"));
+  },
+
+  toggle_registration: async ({ request, locals }) => {
+    const session = await locals.getSession();
+    if (!session) throw redirect(303, "/login");
+    const form = await request.formData();
+    const id = form.get("id");
+
+    const { data: ev } = await locals.supabase
+      .from("events")
+      .select("registration_open, user_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (!ev || ev.user_id !== session.user.id) {
+      return fail(403, { error: "Forbidden" });
+    }
+
+    const { error } = await locals.supabase
+      .from("events")
+      .update({ registration_open: !ev.registration_open })
+      .eq("id", id);
+    if (error) return fail(500, { error: error.message });
+  },
+
+  cancel_registration: async ({ request, locals }) => {
+    const session = await locals.getSession();
+    if (!session) throw redirect(303, "/login");
+    const form = await request.formData();
+    await locals.supabase
+      .from("registrations")
+      .delete()
+      .eq("event_id", form.get("event_id"))
+      .eq("user_id", session.user.id);
   },
 };

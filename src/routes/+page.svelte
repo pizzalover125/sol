@@ -10,9 +10,31 @@
   let profile = $derived(data.profile)
   let editing = $state(null)
   let showCreateForm = $state(false)
-
-  // Per-event live description state for the edit form
+  let expandedAttendees = $state({})
   let editDescriptions = $state({})
+
+  function toggleAttendees(id) {
+    expandedAttendees[id] = !expandedAttendees[id]
+  }
+
+  function attendeeName(a) {
+    const fn = a.profile?.first_name ?? a.first_name ?? ''
+    const ln = a.profile?.last_name ?? a.last_name ?? ''
+    const name = `${fn} ${ln}`.trim()
+    return name || a.email || 'Anonymous'
+  }
+
+  function attendeeFirst(a) {
+    return a.profile?.first_name ?? a.first_name ?? ''
+  }
+
+  function attendeeLast(a) {
+    return a.profile?.last_name ?? a.last_name ?? ''
+  }
+
+  function attendeeIsGuest(a) {
+    return !a.user_id
+  }
 
   function getEditDescription(event) {
     return editDescriptions[event.id] ?? event.description ?? ''
@@ -187,22 +209,109 @@
               <div class="meta-line">📅 {formatEventDate(event.start_time, event.end_time)}</div>
               {#if event.location}<div class="meta-line">📍 {event.location}</div>{/if}
               {#if event.max_attendees}<div class="meta-line">👥 Max {event.max_attendees} attendees</div>{/if}
-              <!-- description intentionally hidden in card view -->
+
               <div class="event-actions">
                 <button class="sm" onclick={() => startEditing(event)}>Edit</button>
+                <button class="sm" onclick={() => toggleAttendees(event.id)}>
+                  {expandedAttendees[event.id] ? 'Hide' : 'Attendees'}
+                  ({(data.attendeesByEvent[event.id] ?? []).length})
+                </button>
+                <form method="POST" action="?/toggle_registration" use:enhance>
+                  <input type="hidden" name="id" value={event.id} />
+                  <button class="sm" type="submit">
+                    {event.registration_open ? 'Close RSVPs' : 'Open RSVPs'}
+                  </button>
+                </form>
                 <form method="POST" action="?/delete" use:enhance>
                   <input type="hidden" name="id" value={event.id} />
                   <button class="sm del" type="submit">Delete</button>
                 </form>
               </div>
+
+              {#if expandedAttendees[event.id]}
+                <div class="attendees">
+                  <div class="attendees-head">
+                    Attendees ({(data.attendeesByEvent[event.id] ?? []).length}{event.max_attendees ? ` / ${event.max_attendees}` : ''})
+                    <span class={event.registration_open ? 'reg-on' : 'reg-off'}>
+                      {event.registration_open ? '● Open' : '○ Closed'}
+                    </span>
+                  </div>
+                  {#if (data.attendeesByEvent[event.id] ?? []).length === 0}
+                    <div class="attendees-empty">No registrations yet.</div>
+                  {:else}
+                    <ul class="attendees-list">
+                      {#each data.attendeesByEvent[event.id] as a (a.id)}
+                        <li>
+                          <Avatar
+                            firstName={attendeeFirst(a)}
+                            lastName={attendeeLast(a)}
+                            url={a.profile?.avatar_url}
+                            size={28}
+                          />
+                          <span class="att-name">
+                            {attendeeName(a)}
+                            {#if attendeeIsGuest(a)}
+                              <span class="att-tag">guest</span>
+                            {/if}
+                          </span>
+                          {#if a.email}
+                            <a class="att-email" href="mailto:{a.email}">{a.email}</a>
+                          {/if}
+                          <span class="att-date">
+                            {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </li>
+                      {/each}
+                    </ul>
+                  {/if}
+                </div>
+              {/if}
             </div>
           </div>
         {/if}
       </div>
     {/each}
   </div>
-</div>
 
+  {#if data.registeredEvents.length > 0}
+    <header class="bar" style="margin-top: 48px;">
+      <h1>Registered Events</h1>
+    </header>
+    <div class="list">
+      {#each data.registeredEvents as event (event.id)}
+        <div class="panel">
+          <div class="event-display">
+            <div class="thumb">
+              {#if event.cover_image_url}
+                <img src={event.cover_image_url} alt={event.name} />
+              {:else}
+                <div class="thumb-fallback">{event.name[0]}</div>
+              {/if}
+            </div>
+            <div class="event-body">
+              <div class="event-top">
+                <h2 class="event-name">{event.name}</h2>
+                <div class="badges">
+                  <span class="badge public">Registered</span>
+                  <a class="slug" href="/{event.slug}" target="_blank">/{event.slug}</a>
+                </div>
+              </div>
+              <div class="meta-line">📅 {formatEventDate(event.start_time, event.end_time)}</div>
+              {#if event.location}<div class="meta-line">📍 {event.location}</div>{/if}
+              <div class="event-actions">
+                <a class="sm" href="/{event.slug}">View</a>
+                <form method="POST" action="?/cancel_registration" use:enhance>
+                  <input type="hidden" name="event_id" value={event.id} />
+                  <button class="sm del" type="submit">Cancel RSVP</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      {/each}
+    </div>
+  {/if}
+</div>
 <style>
   .wrap {
     max-width: 760px;
@@ -283,6 +392,10 @@
     font-size: 13px;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    font-family: inherit;
   }
   .sm:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -579,6 +692,72 @@
   }
   .event-actions form {
     display: inline-flex;
+  }
+
+  .attendees {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .attendees-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .reg-on { color: #7ee8a8; }
+  .reg-off { color: #ffb3a0; }
+  .attendees-empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .attendees-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .attendees-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .att-name {
+    flex: 1;
+    color: #fff;
+  }
+  .att-date {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .att-email {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-decoration: none;
+  }
+  .att-email:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
+  .att-tag {
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 6px;
+    border-radius: 999px;
   }
 
   .error {

@@ -1,10 +1,17 @@
 <script>
   import { marked } from 'marked'
+  import { enhance } from '$app/forms'
 
-  let { data } = $props()
+  let { data, form } = $props()
   const { event } = data
-
-  const hostName = 'The Code Hatch'
+  let attendeeCount = $derived(data.attendeeCount)
+  let isRegistered = $derived(data.isRegistered)
+  let guestRegistered = $derived(data.guestRegistered)
+  let isSignedIn = $derived(data.isSignedIn)
+  let isHost = $derived(data.isHost)
+  let isFull = $derived(
+    event.max_attendees != null && attendeeCount >= event.max_attendees
+  )
 
   const start = new Date(event.start_time)
   const end = new Date(event.end_time)
@@ -21,7 +28,9 @@
   const locName = locParts[0]?.trim() ?? ''
   const locSub = locParts.slice(1).join(',').trim()
 
-  const mapSrc = event.location
+  const isOnline = (event.location ?? '').trim().toLowerCase() === 'online'
+
+  const mapSrc = event.location && !isOnline
     ? `https://maps.google.com/maps?q=${encodeURIComponent(event.location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`
     : ''
 
@@ -75,6 +84,52 @@
       <section class="content">
         <h1 class="title">{event.name}</h1>
 
+        <div class="rsvp-card">
+          <div class="rsvp-head">
+            <span class="rsvp-label">Registration</span>
+            <span class="rsvp-count">
+              {attendeeCount}
+              {#if event.max_attendees}/ {event.max_attendees}{/if}
+              going
+            </span>
+          </div>
+
+          {#if form?.error}
+            <div class="rsvp-error">{form.error}</div>
+          {/if}
+
+          {#if isHost}
+            <div class="rsvp-hint">You're the host of this event.</div>
+          {:else if !event.registration_open}
+            <div class="rsvp-hint closed">Registration is closed.</div>
+          {:else if isRegistered || guestRegistered}
+            <div class="rsvp-going">✓ You're going</div>
+            {#if isRegistered}
+              <form method="POST" action="?/unregister" use:enhance>
+                <button class="rsvp-btn ghost" type="submit">Cancel RSVP</button>
+              </form>
+            {/if}
+          {:else if isFull}
+            <div class="rsvp-hint closed">Event is full.</div>
+          {:else if isSignedIn}
+            <form method="POST" action="?/register" use:enhance>
+              <button class="rsvp-btn" type="submit">Register</button>
+            </form>
+          {:else}
+            <form class="guest-form" method="POST" action="?/register" use:enhance>
+              <div class="guest-row">
+                <input name="first_name" placeholder="First name" required />
+                <input name="last_name" placeholder="Last name" required />
+              </div>
+              <input name="email" type="email" placeholder="you@example.com" required />
+              <button class="rsvp-btn" type="submit">Register</button>
+              <div class="guest-hint">
+                Have an account? <a href="/login">Sign in</a>
+              </div>
+            </form>
+          {/if}
+        </div>
+
         <div class="meta">
           <div class="meta-row">
             <div class="date-tile">
@@ -113,7 +168,7 @@
           {/if}
         </div>
 
-        {#if event.location}
+        {#if event.location && !isOnline}
           <div class="section">
             <div class="section-head">
               <span>Location</span>
@@ -356,7 +411,6 @@
     background: rgba(255, 255, 255, 0.1);
   }
 
-  /* Markdown-rendered description */
   .about {
     font-size: 15px;
     line-height: 1.65;
@@ -458,6 +512,119 @@
     height: 280px;
     border: 0;
     display: block;
+  }
+
+  .rsvp-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .rsvp-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .rsvp-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .rsvp-count {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.75);
+  }
+  .rsvp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5542d;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .rsvp-btn:hover {
+    background: #ff6a44;
+  }
+  .rsvp-btn.ghost {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .rsvp-btn.ghost:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .rsvp-going {
+    color: #7ee8a8;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .rsvp-hint {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+  }
+  .rsvp-hint.closed {
+    color: #ffb3a0;
+  }
+  .rsvp-error {
+    background: rgba(245, 84, 45, 0.12);
+    border: 1px solid rgba(245, 84, 45, 0.4);
+    color: #ffb3a0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .guest-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .guest-row {
+    display: flex;
+    gap: 8px;
+  }
+  .guest-row input {
+    flex: 1;
+    min-width: 0;
+  }
+  .guest-form input {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-size: 14px;
+    color: #fff;
+    font-family: inherit;
+  }
+  .guest-form input:focus {
+    outline: none;
+    border-color: #f5542d;
+  }
+  .guest-form input::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+  }
+  .guest-hint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+  }
+  .guest-hint a {
+    color: #f5542d;
+    text-decoration: none;
+  }
+  .guest-hint a:hover {
+    text-decoration: underline;
   }
 
   @media (max-width: 768px) {

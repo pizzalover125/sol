@@ -1,8 +1,9 @@
+trallelo tralalal
 <script>
   import { supabase } from '$lib/supabase'
   import { goto } from '$app/navigation'
 
-  let mode = $state('signin') // 'signin' | 'signup'
+  let mode = $state('signin') 
   let email = $state('')
   let password = $state('')
   let firstName = $state('')

@@ -1,6 +1,8 @@
-import { error } from "@sveltejs/kit";
+import { error, redirect, fail } from "@sveltejs/kit";
 
-export const load = async ({ params, locals }) => {
+export const load = async ({ params, locals, cookies }) => {
+  const session = await locals.getSession();
+
   const { data: event } = await locals.supabase
     .from("events")
     .select("*")
@@ -19,5 +21,123 @@ export const load = async ({ params, locals }) => {
     event.profile = profile;
   }
 
-  return { event };
+  const { count: attendeeCount } = await locals.supabase
+    .from("registrations")
+    .select("*", { count: "exact", head: true })
+    .eq("event_id", event.id);
+
+  let isRegistered = false;
+  if (session) {
+    const { data: r } = await locals.supabase
+      .from("registrations")
+      .select("id")
+      .eq("event_id", event.id)
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    isRegistered = !!r;
+  }
+
+  const guestRegistered = !session && !!cookies.get(`rsvp_${event.id}`);
+
+  const isHost = !!session && session.user.id === event.user_id;
+
+  return {
+    event,
+    attendeeCount: attendeeCount ?? 0,
+    isRegistered,
+    guestRegistered,
+    isSignedIn: !!session,
+    isHost,
+  };
+};
+
+export const actions = {
+  register: async ({ params, locals, request, cookies }) => {
+    const session = await locals.getSession();
+    const form = await request.formData();
+
+    const { data: event } = await locals.supabase
+      .from("events")
+      .select("id, is_public, registration_open, max_attendees, user_id")
+      .eq("slug", params.slug)
+      .maybeSingle();
+    if (!event) return fail(404, { error: "Event not found" });
+    if (!event.is_public) return fail(403, { error: "Event is private" });
+    if (!event.registration_open) {
+      return fail(400, { error: "Registration is closed" });
+    }
+    if (session && event.user_id === session.user.id) {
+      return fail(400, { error: "Hosts cannot register for their own event" });
+    }
+
+    if (event.max_attendees) {
+      const { count } = await locals.supabase
+        .from("registrations")
+        .select("*", { count: "exact", head: true })
+        .eq("event_id", event.id);
+      if ((count ?? 0) >= event.max_attendees) {
+        return fail(400, { error: "Event is full" });
+      }
+    }
+
+    let row;
+    if (session) {
+      row = { event_id: event.id, user_id: session.user.id };
+    } else {
+      const first_name = (form.get("first_name") ?? "").toString().trim();
+      const last_name = (form.get("last_name") ?? "").toString().trim();
+      const email = (form.get("email") ?? "").toString().trim().toLowerCase();
+      if (!first_name || !last_name || !email) {
+        return fail(400, { error: "First name, last name, and email are required" });
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return fail(400, { error: "Invalid email" });
+      }
+      row = {
+        event_id: event.id,
+        user_id: null,
+        first_name,
+        last_name,
+        email,
+      };
+    }
+
+    const { error: err } = await locals.supabase
+      .from("registrations")
+      .insert(row);
+
+    if (err) {
+      if (err.code === "23505") {
+        return fail(400, { error: "You're already registered for this event" });
+      }
+      return fail(500, { error: err.message });
+    }
+
+    if (!session) {
+      cookies.set(`rsvp_${event.id}`, "1", {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 365,
+      });
+    }
+  },
+
+  unregister: async ({ params, locals }) => {
+    const session = await locals.getSession();
+    if (!session) throw redirect(303, "/login");
+
+    const { data: event } = await locals.supabase
+      .from("events")
+      .select("id")
+      .eq("slug", params.slug)
+      .maybeSingle();
+    if (!event) return fail(404, { error: "Event not found" });
+
+    await locals.supabase
+      .from("registrations")
+      .delete()
+      .eq("event_id", event.id)
+      .eq("user_id", session.user.id);
+  },
 };

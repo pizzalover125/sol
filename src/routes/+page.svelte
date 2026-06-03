@@ -124,6 +124,7 @@
         <label>Max Attendees <input name="max_attendees" type="number" min="1" placeholder="Unlimited" /></label>
         <label>Cover Image URL <input name="cover_image_url" type="url" placeholder="https://..." /></label>
       </div>
+      <label>Join Code <input name="join_code" placeholder="Leave blank for open registration" /></label>
       <FormBuilder />
       <label class="checkbox">
         <input name="is_public" type="checkbox" checked /> Public event
@@ -191,6 +192,7 @@
               <label>Max Attendees <input name="max_attendees" type="number" min="1" value={event.max_attendees ?? ''} /></label>
               <label>Cover Image URL <input name="cover_image_url" type="url" value={event.cover_image_url ?? ''} /></label>
             </div>
+            <label>Join Code <input name="join_code" value={event.join_code ?? ''} placeholder="Leave blank for open registration" /></label>
             <FormBuilder initial={event.registration_questions ?? []} />
             <label class="checkbox">
               <input name="is_public" type="checkbox" checked={event.is_public} /> Public event

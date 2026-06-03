@@ -2,14 +2,14 @@
 
 all-in-one event organizing platform. open source alternative to luma.
 
-### current features
+## current features
 
 - account creation
 - page creation
 - RSVP
 - custom registration forms
 
-### planned features
+## planned features
 
 - emails
   - planning to add with Resend (resend.com)
@@ -18,12 +18,15 @@ all-in-one event organizing platform. open source alternative to luma.
   - user gets a "ticket" in PDF format and organizer can scan it to check them in
 - calendar integration
   - .ics file + Apple Calendar / Google Calendar support
+- invite only (with passcode set by org)
+- CSV export
+- waitlist
+- page customization
 
-### known bugs
+## known bugs
 
-- clicking on events signs you out?
 - if you find bugs, email me at <adi@apanda.dev> or preferably PR!
 
-### technical inforation
+## technical inforation
 
 made with SvelteKit and Supabase. SvelteKit handles frontend + backend. Supabase handles auth + db.

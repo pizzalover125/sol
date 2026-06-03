@@ -13,6 +13,9 @@ export const load = async ({ params, locals, cookies }) => {
   if (!event) throw error(404, "Event not found");
   if (!event.is_public) throw error(403, "This event is private");
 
+  const requiresCode = !!event.join_code;
+  delete event.join_code;
+
   if (event.user_id) {
     const { data: profile } = await locals.supabase
       .from("profiles")
@@ -54,6 +57,7 @@ export const load = async ({ params, locals, cookies }) => {
 
   return {
     event,
+    requiresCode,
     attendeeCount: attendeeCount ?? 0,
     isRegistered,
     guestRegistered,
@@ -71,7 +75,7 @@ export const actions = {
     const { data: event } = await locals.supabase
       .from("events")
       .select(
-        "id, is_public, registration_open, max_attendees, user_id, registration_questions",
+        "id, is_public, registration_open, max_attendees, user_id, registration_questions, join_code",
       )
       .eq("slug", params.slug)
       .maybeSingle();
@@ -79,6 +83,13 @@ export const actions = {
     if (!event.is_public) return fail(403, { error: "Event is private" });
     if (!event.registration_open) {
       return fail(400, { error: "Registration is closed" });
+    }
+    if (event.join_code) {
+      const code = (form.get("join_code") ?? "").toString().trim();
+      if (!code) return fail(400, { error: "This event requires a join code" });
+      if (code.toLowerCase() !== event.join_code.trim().toLowerCase()) {
+        return fail(403, { error: "Incorrect join code" });
+      }
     }
     if (session && event.user_id === session.user.id) {
       return fail(400, { error: "Hosts cannot register for their own event" });

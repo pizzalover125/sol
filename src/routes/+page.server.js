@@ -114,6 +114,7 @@ export const actions = {
         : null,
       is_public: form.get("is_public") === "on",
       cover_image_url: form.get("cover_image_url") || null,
+      join_code: form.get("join_code")?.toString().trim() || null,
       registration_questions: normalizeQuestions(
         form.get("registration_questions"),
       ),
@@ -145,6 +146,7 @@ export const actions = {
           : null,
         is_public: form.get("is_public") === "on",
         cover_image_url: form.get("cover_image_url") || null,
+        join_code: form.get("join_code")?.toString().trim() || null,
         registration_questions: normalizeQuestions(
           form.get("registration_questions"),
         ),

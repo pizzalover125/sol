@@ -5,6 +5,7 @@
   import RegistrationFields from '$lib/RegistrationFields.svelte'
 
   let { data, form } = $props()
+  // svelte-ignore state_referenced_locally
   const { event } = data
   let viewer = $derived(data.viewer)
   const questions = event.registration_questions ?? []
@@ -13,6 +14,7 @@
   let guestRegistered = $derived(data.guestRegistered)
   let isSignedIn = $derived(data.isSignedIn)
   let isHost = $derived(data.isHost)
+  let requiresCode = $derived(data.requiresCode)
   let isFull = $derived(
     event.max_attendees != null && attendeeCount >= event.max_attendees
   )
@@ -124,6 +126,9 @@
             <div class="rsvp-hint closed">Event is full.</div>
           {:else if isSignedIn}
             <form class="guest-form" method="POST" action="?/register" use:enhance>
+              {#if requiresCode}
+                <input name="join_code" placeholder="Join code" required />
+              {/if}
               {#if questions.length}
                 <RegistrationFields {questions} />
               {/if}
@@ -131,6 +136,9 @@
             </form>
           {:else}
             <form class="guest-form" method="POST" action="?/register" use:enhance>
+              {#if requiresCode}
+                <input name="join_code" placeholder="Join code" required />
+              {/if}
               <div class="guest-row">
                 <input name="first_name" placeholder="First name" required />
                 <input name="last_name" placeholder="Last name" required />
@@ -598,7 +606,7 @@
     background: rgba(255, 255, 255, 0.14);
   }
   .rsvp-going {
-    color: #7ee8a8;
+    color: #7ee8a8e3;
     font-weight: 600;
     font-size: 14px;
   }
@@ -675,3 +683,4 @@
     }
   }
 </style>
+

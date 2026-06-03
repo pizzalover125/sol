@@ -1,42 +1,29 @@
-# sv
+# sol
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+all-in-one event organizing platform. open source alternative to luma.
 
-## Creating a project
+### current features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- account creation
+- page creation
+- RSVP
+- custom registration forms
 
-```sh
-# create a new project
-npx sv create my-app
-```
+### planned features
 
-To recreate this project with the same configuration:
+- emails
+  - planning to add with Resend (resend.com)
+  - confirmation email sent when somebody registers
+- check-in w/ QR codes
+  - user gets a "ticket" in PDF format and organizer can scan it to check them in
+- calendar integration
+  - .ics file + Apple Calendar / Google Calendar support
 
-```sh
-# recreate this project
-npx sv@0.15.3 create --template minimal --no-types --install npm ./
-```
+### known bugs
 
-## Developing
+- clicking on events signs you out?
+- if you find bugs, email me at <adi@apanda.dev> or preferably PR!
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### technical inforation
 
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+made with SvelteKit and Supabase. SvelteKit handles frontend + backend. Supabase handles auth + db.

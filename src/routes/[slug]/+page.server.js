@@ -1,4 +1,5 @@
 import { error, redirect, fail } from "@sveltejs/kit";
+import { collectAnswers } from "$lib/formFields";
 
 export const load = async ({ params, locals, cookies }) => {
   const session = await locals.getSession();
@@ -41,6 +42,16 @@ export const load = async ({ params, locals, cookies }) => {
 
   const isHost = !!session && session.user.id === event.user_id;
 
+  let viewer = null;
+  if (session) {
+    const { data: vp } = await locals.supabase
+      .from("profiles")
+      .select("first_name, last_name, avatar_url")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    viewer = vp;
+  }
+
   return {
     event,
     attendeeCount: attendeeCount ?? 0,
@@ -48,6 +59,7 @@ export const load = async ({ params, locals, cookies }) => {
     guestRegistered,
     isSignedIn: !!session,
     isHost,
+    viewer,
   };
 };
 
@@ -58,7 +70,9 @@ export const actions = {
 
     const { data: event } = await locals.supabase
       .from("events")
-      .select("id, is_public, registration_open, max_attendees, user_id")
+      .select(
+        "id, is_public, registration_open, max_attendees, user_id, registration_questions",
+      )
       .eq("slug", params.slug)
       .maybeSingle();
     if (!event) return fail(404, { error: "Event not found" });
@@ -80,6 +94,10 @@ export const actions = {
       }
     }
 
+    const questions = event.registration_questions ?? [];
+    const { answers, error: answerErr } = collectAnswers(questions, form);
+    if (answerErr) return fail(400, { error: answerErr });
+
     let row;
     if (session) {
       row = { event_id: event.id, user_id: session.user.id };
@@ -88,7 +106,9 @@ export const actions = {
       const last_name = (form.get("last_name") ?? "").toString().trim();
       const email = (form.get("email") ?? "").toString().trim().toLowerCase();
       if (!first_name || !last_name || !email) {
-        return fail(400, { error: "First name, last name, and email are required" });
+        return fail(400, {
+          error: "First name, last name, and email are required",
+        });
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return fail(400, { error: "Invalid email" });
@@ -101,6 +121,8 @@ export const actions = {
         email,
       };
     }
+
+    row.answers = answers;
 
     const { error: err } = await locals.supabase
       .from("registrations")

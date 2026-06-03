@@ -3,6 +3,8 @@
   import { supabase } from '$lib/supabase'
   import { goto } from '$app/navigation'
   import Avatar from '$lib/Avatar.svelte'
+  import FormBuilder from '$lib/FormBuilder.svelte'
+  import { formatAnswer } from '$lib/formFields'
   import { marked } from 'marked'
 
   let { data, form } = $props()
@@ -34,6 +36,17 @@
 
   function attendeeIsGuest(a) {
     return !a.user_id
+  }
+
+  function answerList(event, a) {
+    const qs = event.registration_questions ?? []
+    const ans = a.answers ?? {}
+    return qs
+      .filter((q) => {
+        const v = ans[q.id]
+        return v != null && v !== '' && v !== false && !(Array.isArray(v) && v.length === 0)
+      })
+      .map((q) => ({ label: q.label, value: formatAnswer(ans[q.id]) }))
   }
 
   function getEditDescription(event) {
@@ -111,6 +124,7 @@
         <label>Max Attendees <input name="max_attendees" type="number" min="1" placeholder="Unlimited" /></label>
         <label>Cover Image URL <input name="cover_image_url" type="url" placeholder="https://..." /></label>
       </div>
+      <FormBuilder />
       <label class="checkbox">
         <input name="is_public" type="checkbox" checked /> Public event
       </label>
@@ -177,6 +191,7 @@
               <label>Max Attendees <input name="max_attendees" type="number" min="1" value={event.max_attendees ?? ''} /></label>
               <label>Cover Image URL <input name="cover_image_url" type="url" value={event.cover_image_url ?? ''} /></label>
             </div>
+            <FormBuilder initial={event.registration_questions ?? []} />
             <label class="checkbox">
               <input name="is_public" type="checkbox" checked={event.is_public} /> Public event
             </label>
@@ -242,24 +257,36 @@
                     <ul class="attendees-list">
                       {#each data.attendeesByEvent[event.id] as a (a.id)}
                         <li>
-                          <Avatar
-                            firstName={attendeeFirst(a)}
-                            lastName={attendeeLast(a)}
-                            url={a.profile?.avatar_url}
-                            size={28}
-                          />
-                          <span class="att-name">
-                            {attendeeName(a)}
-                            {#if attendeeIsGuest(a)}
-                              <span class="att-tag">guest</span>
+                          <div class="att-main">
+                            <Avatar
+                              firstName={attendeeFirst(a)}
+                              lastName={attendeeLast(a)}
+                              url={a.profile?.avatar_url}
+                              size={28}
+                            />
+                            <span class="att-name">
+                              {attendeeName(a)}
+                              {#if attendeeIsGuest(a)}
+                                <span class="att-tag">guest</span>
+                              {/if}
+                            </span>
+                            {#if a.email}
+                              <a class="att-email" href="mailto:{a.email}">{a.email}</a>
                             {/if}
-                          </span>
-                          {#if a.email}
-                            <a class="att-email" href="mailto:{a.email}">{a.email}</a>
+                            <span class="att-date">
+                              {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
+                          {#if answerList(event, a).length}
+                            <div class="att-answers">
+                              {#each answerList(event, a) as ans}
+                                <div class="att-answer">
+                                  <span class="att-q">{ans.label}</span>
+                                  <span class="att-a">{ans.value}</span>
+                                </div>
+                              {/each}
+                            </div>
                           {/if}
-                          <span class="att-date">
-                            {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
                         </li>
                       {/each}
                     </ul>
@@ -727,9 +754,40 @@
   }
   .attendees-list li {
     display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+  }
+  .att-main {
+    display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 13px;
+  }
+  .att-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-left: 38px;
+    padding: 6px 10px;
+    border-left: 2px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 0 6px 6px 0;
+  }
+  .att-answer {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .att-q {
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .att-q::after {
+    content: ':';
+  }
+  .att-a {
+    color: var(--text-dim);
+    word-break: break-word;
   }
   .att-name {
     flex: 1;

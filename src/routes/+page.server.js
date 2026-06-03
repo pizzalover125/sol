@@ -1,5 +1,6 @@
 import { redirect, fail } from "@sveltejs/kit";
 import { generateSlug } from "$lib/slug";
+import { normalizeQuestions } from "$lib/formFields";
 
 export const load = async ({ locals }) => {
   const session = await locals.getSession();
@@ -19,7 +20,9 @@ export const load = async ({ locals }) => {
   if (ownEventIds.length) {
     const { data: regs } = await locals.supabase
       .from("registrations")
-      .select("id, event_id, user_id, created_at, first_name, last_name, email")
+      .select(
+        "id, event_id, user_id, created_at, first_name, last_name, email, answers",
+      )
       .in("event_id", ownEventIds)
       .order("created_at", { ascending: true });
 
@@ -111,6 +114,9 @@ export const actions = {
         : null,
       is_public: form.get("is_public") === "on",
       cover_image_url: form.get("cover_image_url") || null,
+      registration_questions: normalizeQuestions(
+        form.get("registration_questions"),
+      ),
       slug,
     });
 
@@ -139,6 +145,9 @@ export const actions = {
           : null,
         is_public: form.get("is_public") === "on",
         cover_image_url: form.get("cover_image_url") || null,
+        registration_questions: normalizeQuestions(
+          form.get("registration_questions"),
+        ),
       })
       .eq("id", form.get("id"));
 

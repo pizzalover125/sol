@@ -1,9 +1,13 @@
-<script>
+<script> 
   import { marked } from 'marked'
   import { enhance } from '$app/forms'
+  import Avatar from '$lib/Avatar.svelte'
+  import RegistrationFields from '$lib/RegistrationFields.svelte'
 
   let { data, form } = $props()
   const { event } = data
+  let viewer = $derived(data.viewer)
+  const questions = event.registration_questions ?? []
   let attendeeCount = $derived(data.attendeeCount)
   let isRegistered = $derived(data.isRegistered)
   let guestRegistered = $derived(data.guestRegistered)
@@ -47,7 +51,14 @@
   <nav class="nav">
     <a class="logo" href="/">●</a>
     <div class="nav-right">
-      <a href="/login" class="signin">Sign In</a>
+      {#if viewer}
+        <a class="user-chip" href="/">
+          <Avatar firstName={viewer.first_name} lastName={viewer.last_name} url={viewer.avatar_url} size={28} />
+          <span class="user-name">{viewer.first_name} {viewer.last_name}</span>
+        </a>
+      {:else}
+        <a href="/login" class="signin">Sign In</a>
+      {/if}
     </div>
   </nav>
 
@@ -112,7 +123,10 @@
           {:else if isFull}
             <div class="rsvp-hint closed">Event is full.</div>
           {:else if isSignedIn}
-            <form method="POST" action="?/register" use:enhance>
+            <form class="guest-form" method="POST" action="?/register" use:enhance>
+              {#if questions.length}
+                <RegistrationFields {questions} />
+              {/if}
               <button class="rsvp-btn" type="submit">Register</button>
             </form>
           {:else}
@@ -122,6 +136,9 @@
                 <input name="last_name" placeholder="Last name" required />
               </div>
               <input name="email" type="email" placeholder="you@example.com" required />
+              {#if questions.length}
+                <RegistrationFields {questions} />
+              {/if}
               <button class="rsvp-btn" type="submit">Register</button>
               <div class="guest-hint">
                 Have an account? <a href="/login">Sign in</a>
@@ -236,6 +253,21 @@
     background: rgba(255, 255, 255, 0.08);
     padding: 7px 14px;
     border-radius: 8px;
+  }
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 4px 4px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .user-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.82) !important;
+    white-space: nowrap;
   }
 
   .container {

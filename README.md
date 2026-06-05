@@ -8,6 +8,8 @@ all-in-one event organizing platform. open source alternative to luma.
 - page creation
 - RSVP
 - custom registration forms
+- invite only registration
+- CSV export
 
 ## planned features
 
@@ -18,8 +20,6 @@ all-in-one event organizing platform. open source alternative to luma.
   - user gets a "ticket" in PDF format and organizer can scan it to check them in
 - calendar integration
   - .ics file + Apple Calendar / Google Calendar support
-- invite only (with passcode set by org)
-- CSV export
 - waitlist
 - page customization
 

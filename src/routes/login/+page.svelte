@@ -1,4 +1,3 @@
-trallelo tralalal
 <script>
   import { supabase } from '$lib/supabase'
   import { goto } from '$app/navigation'

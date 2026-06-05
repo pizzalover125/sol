@@ -249,8 +249,13 @@
                 <div class="attendees">
                   <div class="attendees-head">
                     Attendees ({(data.attendeesByEvent[event.id] ?? []).length}{event.max_attendees ? ` / ${event.max_attendees}` : ''})
-                    <span class={event.registration_open ? 'reg-on' : 'reg-off'}>
-                      {event.registration_open ? '● Open' : '○ Closed'}
+                    <span class="attendees-head-right">
+                      {#if (data.attendeesByEvent[event.id] ?? []).length}
+                        <a class="csv-link" href="/{event.slug}/attendees.csv" download>↓ CSV</a>
+                      {/if}
+                      <span class={event.registration_open ? 'reg-on' : 'reg-off'}>
+                        {event.registration_open ? '● Open' : '○ Closed'}
+                      </span>
                     </span>
                   </div>
                   {#if (data.attendeesByEvent[event.id] ?? []).length === 0}
@@ -738,6 +743,22 @@
     text-transform: uppercase;
     color: var(--text-muted);
     margin-bottom: 10px;
+  }
+  .attendees-head-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .csv-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0;
+    text-transform: none;
+    font-weight: 600;
+    transition: color 0.15s;
+  }
+  .csv-link:hover {
+    color: #fff;
   }
   .reg-on { color: #7ee8a8; }
   .reg-off { color: #ffb3a0; }

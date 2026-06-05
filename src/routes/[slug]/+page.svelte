@@ -3,6 +3,7 @@
   import { enhance } from '$app/forms'
   import Avatar from '$lib/Avatar.svelte'
   import RegistrationFields from '$lib/RegistrationFields.svelte'
+  import AddToCalendar from '$lib/AddToCalendar.svelte'
 
   let { data, form } = $props()
   // svelte-ignore state_referenced_locally
@@ -113,10 +114,12 @@
 
           {#if isHost}
             <div class="rsvp-hint">You're the host of this event.</div>
+            <AddToCalendar {event} variant="solid" />
           {:else if !event.registration_open}
             <div class="rsvp-hint closed">Registration is closed.</div>
           {:else if isRegistered || guestRegistered}
             <div class="rsvp-going">✓ You're going</div>
+            <AddToCalendar {event} variant="solid" />
             {#if isRegistered}
               <form method="POST" action="?/unregister" use:enhance>
                 <button class="rsvp-btn ghost" type="submit">Cancel RSVP</button>
@@ -683,4 +686,6 @@
     }
   }
 </style>
+
+
 

@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation'
   import Avatar from '$lib/Avatar.svelte'
   import FormBuilder from '$lib/FormBuilder.svelte'
+  import AddToCalendar from '$lib/AddToCalendar.svelte'
   import { formatAnswer } from '$lib/formFields'
   import { marked } from 'marked'
 
@@ -229,6 +230,7 @@
 
               <div class="event-actions">
                 <button class="sm" onclick={() => startEditing(event)}>Edit</button>
+                <AddToCalendar {event} />
                 <button class="sm" onclick={() => toggleAttendees(event.id)}>
                   {expandedAttendees[event.id] ? 'Hide' : 'Attendees'}
                   ({(data.attendeesByEvent[event.id] ?? []).length})
@@ -334,6 +336,7 @@
               {#if event.location}<div class="meta-line">📍 {event.location}</div>{/if}
               <div class="event-actions">
                 <a class="sm" href="/{event.slug}">View</a>
+                <AddToCalendar {event} />
                 <form method="POST" action="?/cancel_registration" use:enhance>
                   <input type="hidden" name="event_id" value={event.id} />
                   <button class="sm del" type="submit">Cancel RSVP</button>

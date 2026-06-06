@@ -4,7 +4,16 @@ import { normalizeQuestions } from "$lib/formFields";
 
 export const load = async ({ locals }) => {
   const session = await locals.getSession();
-  if (!session) throw redirect(303, "/login");
+  if (!session) {
+    return {
+      landing: true,
+      events: [],
+      attendeesByEvent: {},
+      registeredEvents: [],
+      profile: null,
+      session: null,
+    };
+  }
 
   const userId = session.user.id;
 

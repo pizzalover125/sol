@@ -5,6 +5,7 @@
   import Avatar from '$lib/Avatar.svelte'
   import FormBuilder from '$lib/FormBuilder.svelte'
   import AddToCalendar from '$lib/AddToCalendar.svelte'
+  import Landing from '$lib/Landing.svelte'
   import { formatAnswer } from '$lib/formFields'
   import { marked } from 'marked'
 
@@ -78,6 +79,9 @@
   }
 </script>
 
+{#if data.landing}
+  <Landing />
+{:else}
 <div class="wrap">
   <header class="bar">
     <h1>My Events</h1>
@@ -349,6 +353,7 @@
     </div>
   {/if}
 </div>
+{/if}
 <style>
   .wrap {
     max-width: 760px;

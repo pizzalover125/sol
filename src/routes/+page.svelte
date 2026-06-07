@@ -167,6 +167,7 @@
         <label>Cover Image URL <input name="cover_image_url" type="url" placeholder="https://..." /></label>
       </div>
       <div class="theme-section">
+        <!-- svelte-ignore a11y_label_has_associated_control -->
         <label>Theme</label>
         <div class="theme-grid">
           {#each themes as t}
@@ -251,6 +252,7 @@
               <label>Cover Image URL <input name="cover_image_url" type="url" value={event.cover_image_url ?? ''} /></label>
             </div>
             <div class="theme-section">
+              <!-- svelte-ignore a11y_label_has_associated_control -->
               <label>Theme</label>
               <div class="theme-grid">
                 {#each themes as t}

@@ -55,6 +55,12 @@
     return editDescriptions[event.id] ?? event.description ?? ''
   }
 
+  function stopEditing(id) {
+    editing = null
+    delete editThemes[id]
+    delete editColors[id]
+  }
+
   function startEditing(event) {
     editDescriptions[event.id] = event.description ?? ''
     editing = event.id
@@ -67,6 +73,37 @@
 
   function toInputValue(ts) {
     return new Date(ts).toISOString().slice(0, 16)
+  }
+
+  const themes = [
+    { name: 'Dark', bg: '#0a0a0b', text: '#ffffff', accent: '#f5542d' },
+    { name: 'Midnight', bg: '#0f0f1a', text: '#e8e8f0', accent: '#7c5cfc' },
+    { name: 'Forest', bg: '#0a120a', text: '#d4edda', accent: '#4ade80' },
+    { name: 'Ocean', bg: '#0a0f1a', text: '#dbeafe', accent: '#60a5fa' },
+    { name: 'Sunset', bg: '#1a0f0a', text: '#fed7aa', accent: '#fb923c' },
+    { name: 'Rose', bg: '#1a0a0f', text: '#fce7f3', accent: '#f472b6' },
+    { name: 'Light', bg: '#f5f5f0', text: '#1a1a1a', accent: '#d43d1a' },
+    { name: 'Slate', bg: '#0f1117', text: '#e2e8f0', accent: '#94a3b8' },
+  ]
+
+  let createTheme = $state('Dark')
+  let createBg = $state('#0a0a0b')
+  let createText = $state('#ffffff')
+  let createAccent = $state('#f5542d')
+
+  function applyCreateTheme(t) {
+    createTheme = t.name
+    createBg = t.bg
+    createText = t.text
+    createAccent = t.accent
+  }
+
+  let editThemes = $state({})
+  let editColors = $state({})
+
+  function applyEditTheme(t, eventId) {
+    editThemes[eventId] = t.name
+    editColors[eventId] = { bg: t.bg, text: t.text, accent: t.accent }
   }
 
   function formatEventDate(start, end) {
@@ -129,6 +166,22 @@
         <label>Max Attendees <input name="max_attendees" type="number" min="1" placeholder="Unlimited" /></label>
         <label>Cover Image URL <input name="cover_image_url" type="url" placeholder="https://..." /></label>
       </div>
+      <div class="theme-section">
+        <label>Theme</label>
+        <div class="theme-grid">
+          {#each themes as t}
+            <button type="button" class="theme-swatch {createTheme === t.name ? 'active' : ''}"
+              style="background: {t.bg};" onclick={() => applyCreateTheme(t)}>
+              <span style="color: {t.text};">{t.name[0]}</span>
+            </button>
+          {/each}
+        </div>
+      </div>
+      <div class="row row-3">
+        <label>Background <input name="background_color" type="color" value={createBg} /></label>
+        <label>Text <input name="text_color" type="color" value={createText} /></label>
+        <label>Accent <input name="accent_color" type="color" value={createAccent} /></label>
+      </div>
       <label>Join Code <input name="join_code" placeholder="Leave blank for open registration" /></label>
       <FormBuilder />
       <label class="checkbox">
@@ -153,7 +206,7 @@
             use:enhance={() => {
               return async ({ update }) => {
                 await update()
-                editing = null
+                stopEditing(event.id)
               }
             }}
           >
@@ -197,6 +250,22 @@
               <label>Max Attendees <input name="max_attendees" type="number" min="1" value={event.max_attendees ?? ''} /></label>
               <label>Cover Image URL <input name="cover_image_url" type="url" value={event.cover_image_url ?? ''} /></label>
             </div>
+            <div class="theme-section">
+              <label>Theme</label>
+              <div class="theme-grid">
+                {#each themes as t}
+                  <button type="button" class="theme-swatch {editThemes[event.id] === t.name ? 'active' : ''}"
+                    style="background: {t.bg};" onclick={() => applyEditTheme(t, event.id)}>
+                    <span style="color: {t.text};">{t.name[0]}</span>
+                  </button>
+                {/each}
+              </div>
+            </div>
+            <div class="row row-3">
+              <label>Background <input name="background_color" type="color" value={editColors[event.id]?.bg ?? event.background_color ?? '#0a0a0b'} /></label>
+              <label>Text <input name="text_color" type="color" value={editColors[event.id]?.text ?? event.text_color ?? '#ffffff'} /></label>
+              <label>Accent <input name="accent_color" type="color" value={editColors[event.id]?.accent ?? event.accent_color ?? '#f5542d'} /></label>
+            </div>
             <label>Join Code <input name="join_code" value={event.join_code ?? ''} placeholder="Leave blank for open registration" /></label>
             <FormBuilder initial={event.registration_questions ?? []} />
             <label class="checkbox">
@@ -204,7 +273,7 @@
             </label>
             <div class="event-actions">
               <button class="primary" type="submit">Save</button>
-              <button class="ghost" type="button" onclick={() => editing = null}>Cancel</button>
+              <button class="ghost" type="button" onclick={() => stopEditing(event.id)}>Cancel</button>
             </div>
           </form>
         {:else}
@@ -864,8 +933,69 @@
     padding: 56px 0;
   }
 
+  .theme-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .theme-section label {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .theme-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .theme-swatch {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 0;
+    transition: border-color 0.15s;
+  }
+  .theme-swatch:hover {
+    border-color: var(--accent);
+  }
+  .theme-swatch.active {
+    border-color: #fff;
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .row-3 {
+    display: flex;
+    gap: 10px;
+  }
+  .row-3 label {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .row-3 input[type="color"] {
+    width: 100%;
+    height: 40px;
+    padding: 2px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+  }
+
   @media (max-width: 560px) {
     .row {
+      flex-direction: column;
+    }
+    .row-3 {
       flex-direction: column;
     }
     .event-display {

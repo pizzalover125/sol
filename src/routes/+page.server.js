@@ -123,6 +123,9 @@ export const actions = {
         : null,
       is_public: form.get("is_public") === "on",
       cover_image_url: form.get("cover_image_url") || null,
+      background_color: form.get("background_color") || null,
+      text_color: form.get("text_color") || null,
+      accent_color: form.get("accent_color") || null,
       join_code: form.get("join_code")?.toString().trim() || null,
       registration_questions: normalizeQuestions(
         form.get("registration_questions"),
@@ -155,6 +158,9 @@ export const actions = {
           : null,
         is_public: form.get("is_public") === "on",
         cover_image_url: form.get("cover_image_url") || null,
+        background_color: form.get("background_color") || null,
+        text_color: form.get("text_color") || null,
+        accent_color: form.get("accent_color") || null,
         join_code: form.get("join_code")?.toString().trim() || null,
         registration_questions: normalizeQuestions(
           form.get("registration_questions"),

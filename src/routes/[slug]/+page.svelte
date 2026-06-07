@@ -50,7 +50,7 @@
   <title>{event.name} · Events</title>
 </svelte:head>
 
-<div class="page">
+<div class="page" style="--page-bg: {event.background_color || '#0a0a0b'}; --page-text: {event.text_color || '#ffffff'}; --page-accent: {event.accent_color || '#f5542d'}">
   <nav class="nav">
     <a class="logo" href="/">●</a>
     <div class="nav-right">
@@ -227,9 +227,9 @@
   .page {
     min-height: 100vh;
     background:
-      radial-gradient(1200px 600px at 50% -10%, rgba(245, 84, 45, 0.13), transparent 60%),
-      #0a0a0b;
-    color: #fff;
+      radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, var(--page-accent) 13%, transparent), transparent 60%),
+      var(--page-bg, #0a0a0b);
+    color: var(--page-text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -243,7 +243,7 @@
     padding: 18px 24px;
   }
   .logo {
-    color: #fff;
+    color: var(--page-text);
     font-size: 18px;
     text-decoration: none;
   }
@@ -253,15 +253,15 @@
     gap: 20px;
   }
   .nav-right a {
-    color: rgba(255, 255, 255, 0.7);
+    color: color-mix(in srgb, var(--page-text) 70%, transparent);
     text-decoration: none;
     font-size: 14px;
   }
   .nav-right a:hover {
-    color: #fff;
+    color: var(--page-text);
   }
   .signin {
-    background: rgba(255, 255, 255, 0.08);
+    background: color-mix(in srgb, var(--page-text) 8%, transparent);
     padding: 7px 14px;
     border-radius: 8px;
   }
@@ -270,14 +270,14 @@
     align-items: center;
     gap: 8px;
     padding: 4px 12px 4px 4px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid color-mix(in srgb, var(--page-text) 8%, transparent);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.04);
+    background: color-mix(in srgb, var(--page-text) 4%, transparent);
   }
   .user-name {
     font-size: 13px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.82) !important;
+    color: color-mix(in srgb, var(--page-text) 82%, transparent) !important;
     white-space: nowrap;
   }
 
@@ -305,7 +305,7 @@
     aspect-ratio: 1;
     border-radius: 16px;
     overflow: hidden;
-    background: #18181b;
+    background: color-mix(in srgb, var(--page-bg) 70%, #000);
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
   }
   .cover img {
@@ -322,7 +322,7 @@
     justify-content: center;
     font-size: 72px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.25);
+    color: color-mix(in srgb, var(--page-text) 25%, transparent);
   }
 
   .host-card {
@@ -330,11 +330,11 @@
     flex-direction: column;
     gap: 10px;
     padding-top: 4px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid color-mix(in srgb, var(--page-text) 8%, transparent);
   }
   .host-label {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.45);
+    color: color-mix(in srgb, var(--page-text) 45%, transparent);
     margin-top: 12px;
   }
   .host-row {
@@ -346,8 +346,8 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #f5542d;
-    color: #fff;
+    background: var(--page-accent);
+    color: var(--page-text);
     font-size: 12px;
     font-weight: 600;
     display: flex;
@@ -385,18 +385,18 @@
     width: 44px;
     height: 44px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid color-mix(in srgb, var(--page-text) 12%, transparent);
     overflow: hidden;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    background: rgba(255, 255, 255, 0.03);
+    background: color-mix(in srgb, var(--page-text) 3%, transparent);
   }
   .date-tile-top {
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 0.04em;
-    color: #f5542d;
+    color: var(--page-accent);
     text-align: center;
     padding-top: 4px;
   }
@@ -411,13 +411,13 @@
     width: 44px;
     height: 44px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid color-mix(in srgb, var(--page-text) 12%, transparent);
+    background: color-mix(in srgb, var(--page-text) 3%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: rgba(255, 255, 255, 0.7);
+    color: color-mix(in srgb, var(--page-text) 70%, transparent);
   }
   .meta-text {
     display: flex;
@@ -430,7 +430,7 @@
   }
   .meta-secondary {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
+    color: color-mix(in srgb, var(--page-text) 50%, transparent);
   }
 
   .section {
@@ -445,19 +445,19 @@
   .section-head span {
     font-size: 14px;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.5);
+    color: color-mix(in srgb, var(--page-text) 50%, transparent);
     white-space: nowrap;
   }
   .rule {
     flex: 1;
     height: 1px;
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--page-text) 10%, transparent);
   }
 
   .about {
     font-size: 15px;
     line-height: 1.65;
-    color: rgba(255, 255, 255, 0.82);
+    color: color-mix(in srgb, var(--page-text) 82%, transparent);
   }
   .about :global(p) {
     margin: 0 0 12px;
@@ -472,7 +472,7 @@
     font-weight: 600;
     letter-spacing: -0.01em;
     margin: 20px 0 8px;
-    color: #fff;
+    color: var(--page-text);
   }
   .about :global(h1) { font-size: 20px; }
   .about :global(h2) { font-size: 17px; }
@@ -486,32 +486,32 @@
     margin-bottom: 4px;
   }
   .about :global(a) {
-    color: #f5542d;
+    color: var(--page-accent);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
   .about :global(a:hover) {
-    color: #ff7a5c;
+    color: color-mix(in srgb, var(--page-accent) 70%, white);
   }
   .about :global(strong) {
     font-weight: 600;
-    color: #fff;
+    color: var(--page-text);
   }
   .about :global(em) {
     font-style: italic;
-    color: rgba(255, 255, 255, 0.7);
+    color: color-mix(in srgb, var(--page-text) 70%, transparent);
   }
   .about :global(code) {
     font-family: 'SF Mono', 'Fira Code', monospace;
     font-size: 13px;
-    background: rgba(255, 255, 255, 0.08);
+    background: color-mix(in srgb, var(--page-text) 8%, transparent);
     padding: 2px 6px;
     border-radius: 5px;
-    color: rgba(255, 255, 255, 0.9);
+    color: color-mix(in srgb, var(--page-text) 90%, transparent);
   }
   .about :global(pre) {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: color-mix(in srgb, var(--page-text) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--page-text) 8%, transparent);
     border-radius: 10px;
     padding: 14px 16px;
     overflow-x: auto;
@@ -523,15 +523,15 @@
     font-size: 13px;
   }
   .about :global(blockquote) {
-    border-left: 3px solid #f5542d;
+    border-left: 3px solid var(--page-accent);
     margin: 12px 0;
     padding: 6px 0 6px 14px;
-    color: rgba(255, 255, 255, 0.6);
+    color: color-mix(in srgb, var(--page-text) 60%, transparent);
     font-style: italic;
   }
   .about :global(hr) {
     border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid color-mix(in srgb, var(--page-text) 10%, transparent);
     margin: 20px 0;
   }
 
@@ -541,14 +541,14 @@
   }
   .location-sub {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.5);
+    color: color-mix(in srgb, var(--page-text) 50%, transparent);
     margin-top: 2px;
   }
   .map {
     margin-top: 14px;
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid color-mix(in srgb, var(--page-text) 10%, transparent);
   }
   .map iframe {
     width: 100%;
@@ -558,8 +558,8 @@
   }
 
   .rsvp-card {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid color-mix(in srgb, var(--page-text) 10%, transparent);
+    background: color-mix(in srgb, var(--page-text) 3%, transparent);
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 28px;
@@ -577,18 +577,18 @@
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.5);
+    color: color-mix(in srgb, var(--page-text) 50%, transparent);
   }
   .rsvp-count {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.75);
+    color: color-mix(in srgb, var(--page-text) 75%, transparent);
   }
   .rsvp-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #f5542d;
-    color: #fff;
+    background: var(--page-accent);
+    color: var(--page-text);
     border: none;
     border-radius: 9px;
     padding: 10px 16px;
@@ -599,14 +599,14 @@
     transition: background 0.15s;
   }
   .rsvp-btn:hover {
-    background: #ff6a44;
+    background: color-mix(in srgb, var(--page-accent) 80%, white);
   }
   .rsvp-btn.ghost {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.85);
+    background: color-mix(in srgb, var(--page-text) 8%, transparent);
+    color: color-mix(in srgb, var(--page-text) 85%, transparent);
   }
   .rsvp-btn.ghost:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background: color-mix(in srgb, var(--page-text) 14%, transparent);
   }
   .rsvp-going {
     color: #7ee8a8e3;
@@ -615,14 +615,14 @@
   }
   .rsvp-hint {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.55);
+    color: color-mix(in srgb, var(--page-text) 55%, transparent);
   }
   .rsvp-hint.closed {
     color: #ffb3a0;
   }
   .rsvp-error {
-    background: rgba(245, 84, 45, 0.12);
-    border: 1px solid rgba(245, 84, 45, 0.4);
+    background: color-mix(in srgb, var(--page-accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--page-accent) 40%, transparent);
     color: #ffb3a0;
     padding: 8px 12px;
     border-radius: 8px;
@@ -642,28 +642,28 @@
     min-width: 0;
   }
   .guest-form input {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: color-mix(in srgb, var(--page-text) 4%, transparent);
+    border: 1px solid color-mix(in srgb, var(--page-text) 12%, transparent);
     border-radius: 8px;
     padding: 9px 11px;
     font-size: 14px;
-    color: #fff;
+    color: var(--page-text);
     font-family: inherit;
   }
   .guest-form input:focus {
     outline: none;
-    border-color: #f5542d;
+    border-color: var(--page-accent);
   }
   .guest-form input::placeholder {
-    color: rgba(255, 255, 255, 0.35);
+    color: color-mix(in srgb, var(--page-text) 35%, transparent);
   }
   .guest-hint {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
+    color: color-mix(in srgb, var(--page-text) 50%, transparent);
     text-align: center;
   }
   .guest-hint a {
-    color: #f5542d;
+    color: var(--page-accent);
     text-decoration: none;
   }
   .guest-hint a:hover {
@@ -686,6 +686,3 @@
     }
   }
 </style>
-
-
-

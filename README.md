@@ -12,14 +12,13 @@ all-in-one event organizing platform. open source alternative to luma.
 - CSV export
 - calendar integration (Google, Apple / .ics)
 - page customization
+- check-in w/ QR codes
 
 ## planned features
 
 - emails
   - planning to add with Resend (resend.com)
   - confirmation email sent when somebody registers
-- check-in w/ QR codes
-  - user gets a "ticket" in PDF format and organizer can scan it to check them in
 - waitlist
 - proper logo
 

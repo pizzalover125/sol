@@ -30,7 +30,7 @@ export const load = async ({ locals }) => {
     const { data: regs } = await locals.supabase
       .from("registrations")
       .select(
-        "id, event_id, user_id, created_at, first_name, last_name, email, answers",
+        "id, event_id, user_id, created_at, first_name, last_name, email, answers, checked_in, checked_in_at",
       )
       .in("event_id", ownEventIds)
       .order("created_at", { ascending: true });

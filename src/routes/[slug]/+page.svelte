@@ -114,12 +114,20 @@
 
           {#if isHost}
             <div class="rsvp-hint">You're the host of this event.</div>
-            <AddToCalendar {event} variant="solid" />
+            <div class="rsvp-actions">
+              <AddToCalendar {event} variant="solid" />
+              <a class="rsvp-btn ghost" href="/{event.slug}/check-in">Check-in</a>
+            </div>
           {:else if !event.registration_open}
             <div class="rsvp-hint closed">Registration is closed.</div>
           {:else if isRegistered || guestRegistered}
             <div class="rsvp-going">✓ You're going</div>
-            <AddToCalendar {event} variant="solid" />
+            <div class="rsvp-actions">
+              <AddToCalendar {event} variant="solid" />
+              {#if isRegistered}
+                <a class="rsvp-btn" href="/{event.slug}/ticket" download>Download Ticket</a>
+              {/if}
+            </div>
             {#if isRegistered}
               <form method="POST" action="?/unregister" use:enhance>
                 <button class="rsvp-btn ghost" type="submit">Cancel RSVP</button>
@@ -607,6 +615,14 @@
   }
   .rsvp-btn.ghost:hover {
     background: color-mix(in srgb, var(--page-text) 14%, transparent);
+  }
+  .rsvp-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .rsvp-actions :global(a),
+  .rsvp-actions :global(button) {
+    flex: 1;
   }
   .rsvp-going {
     color: #7ee8a8e3;

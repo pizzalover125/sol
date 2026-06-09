@@ -310,6 +310,7 @@
                   {expandedAttendees[event.id] ? 'Hide' : 'Attendees'}
                   ({(data.attendeesByEvent[event.id] ?? []).length})
                 </button>
+                <a class="sm" href="/{event.slug}/check-in">Check-in</a>
                 <form method="POST" action="?/toggle_registration" use:enhance>
                   <input type="hidden" name="id" value={event.id} />
                   <button class="sm" type="submit">
@@ -352,6 +353,9 @@
                               {attendeeName(a)}
                               {#if attendeeIsGuest(a)}
                                 <span class="att-tag">guest</span>
+                              {/if}
+                              {#if a.checked_in}
+                                <span class="att-tag checked-in">checked in</span>
                               {/if}
                             </span>
                             {#if a.email}
@@ -918,6 +922,10 @@
     background: rgba(255, 255, 255, 0.06);
     padding: 1px 6px;
     border-radius: 999px;
+  }
+  .att-tag.checked-in {
+    color: #7ee8a8;
+    background: rgba(126, 232, 168, 0.12);
   }
 
   .error {

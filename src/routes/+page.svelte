@@ -5,6 +5,7 @@
   import Avatar from '$lib/Avatar.svelte'
   import FormBuilder from '$lib/FormBuilder.svelte'
   import AddToCalendar from '$lib/AddToCalendar.svelte'
+  import Share from '$lib/Share.svelte'
   import Landing from '$lib/Landing.svelte'
   import { formatAnswer } from '$lib/formFields'
   import { marked } from 'marked'
@@ -306,6 +307,7 @@
               <div class="event-actions">
                 <button class="sm" onclick={() => startEditing(event)}>Edit</button>
                 <AddToCalendar {event} />
+                <Share {event} size="sm" label="" />
                 <button class="sm" onclick={() => toggleAttendees(event.id)}>
                   {expandedAttendees[event.id] ? 'Hide' : 'Attendees'}
                   ({(data.attendeesByEvent[event.id] ?? []).length})
@@ -416,6 +418,7 @@
               <div class="event-actions">
                 <a class="sm" href="/{event.slug}">View</a>
                 <AddToCalendar {event} />
+                <Share {event} size="sm" label="" />
                 <form method="POST" action="?/cancel_registration" use:enhance>
                   <input type="hidden" name="event_id" value={event.id} />
                   <button class="sm del" type="submit">Cancel RSVP</button>

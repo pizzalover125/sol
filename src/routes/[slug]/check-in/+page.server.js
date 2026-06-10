@@ -1,8 +1,8 @@
 import { error, fail } from "@sveltejs/kit";
 
 export const load = async ({ params, locals, url }) => {
-  const session = await locals.getSession();
-  if (!session) throw error(401, "Not signed in");
+  const user = await locals.getUser();
+  if (!user) throw error(401, "Not signed in");
 
   const { data: event } = await locals.supabase
     .from("events")
@@ -11,7 +11,7 @@ export const load = async ({ params, locals, url }) => {
     .maybeSingle();
 
   if (!event) throw error(404, "Event not found");
-  if (event.user_id !== session.user.id)
+  if (event.user_id !== user.id)
     throw error(403, "Only the event host can check in attendees");
 
   const { data: registrations } = await locals.supabase
@@ -40,7 +40,7 @@ export const load = async ({ params, locals, url }) => {
   }));
 
   let checkedIn = null;
-  let checkInError = null;
+  let checkedInError = null;
   const ticketId = url.searchParams.get("ticket");
   if (ticketId) {
     const { data: reg } = await locals.supabase
@@ -51,10 +51,10 @@ export const load = async ({ params, locals, url }) => {
       .maybeSingle();
 
     if (!reg) {
-      checkInError = "Invalid ticket";
+      checkedInError = "Invalid ticket";
     } else if (reg.checked_in) {
       checkedIn = reg;
-      checkInError = "already_checked_in";
+      checkedInError = "already_checked_in";
     } else {
       const { error: updErr } = await locals.supabase
         .from("registrations")
@@ -62,7 +62,7 @@ export const load = async ({ params, locals, url }) => {
         .eq("id", ticketId);
 
       if (updErr) {
-        checkInError = "Failed to check in";
+        checkedInError = "Failed to check in";
       } else {
         checkedIn = reg;
       }
@@ -79,8 +79,8 @@ export const load = async ({ params, locals, url }) => {
 
 export const actions = {
   check_in: async ({ params, locals, request }) => {
-    const session = await locals.getSession();
-    if (!session) return fail(401, { error: "Not signed in" });
+    const user = await locals.getUser();
+    if (!user) return fail(401, { error: "Not signed in" });
 
     const form = await request.formData();
     const ticketId = form.get("ticket_id")?.toString().trim();
@@ -93,7 +93,7 @@ export const actions = {
       .maybeSingle();
 
     if (!event) return fail(404, { error: "Event not found" });
-    if (event.user_id !== session.user.id)
+    if (event.user_id !== user.id)
       return fail(403, { error: "Forbidden" });
 
     const { data: reg } = await locals.supabase

@@ -4,6 +4,7 @@
   import Avatar from '$lib/Avatar.svelte'
   import RegistrationFields from '$lib/RegistrationFields.svelte'
   import AddToCalendar from '$lib/AddToCalendar.svelte'
+  import Share from '$lib/Share.svelte'
 
   let { data, form } = $props()
   // svelte-ignore state_referenced_locally
@@ -117,9 +118,13 @@
             <div class="rsvp-actions">
               <AddToCalendar {event} variant="solid" />
               <a class="rsvp-btn ghost" href="/{event.slug}/check-in">Check-in</a>
+              <Share {event} variant="ghost" />
             </div>
           {:else if !event.registration_open}
             <div class="rsvp-hint closed">Registration is closed.</div>
+            <div class="rsvp-actions">
+              <Share {event} variant="ghost" />
+            </div>
           {:else if isRegistered || guestRegistered}
             <div class="rsvp-going">✓ You're going</div>
             <div class="rsvp-actions">
@@ -127,6 +132,7 @@
               {#if isRegistered}
                 <a class="rsvp-btn" href="/{event.slug}/ticket" download>Download Ticket</a>
               {/if}
+              <Share {event} variant="ghost" />
             </div>
             {#if isRegistered}
               <form method="POST" action="?/unregister" use:enhance>
@@ -135,6 +141,9 @@
             {/if}
           {:else if isFull}
             <div class="rsvp-hint closed">Event is full.</div>
+            <div class="rsvp-actions">
+              <Share {event} variant="ghost" />
+            </div>
           {:else if isSignedIn}
             <form class="guest-form" method="POST" action="?/register" use:enhance>
               {#if requiresCode}
@@ -143,7 +152,10 @@
               {#if questions.length}
                 <RegistrationFields {questions} />
               {/if}
-              <button class="rsvp-btn" type="submit">Register</button>
+              <div class="rsvp-actions">
+                <button class="rsvp-btn" type="submit">Register</button>
+                <Share {event} variant="ghost" />
+              </div>
             </form>
           {:else}
             <form class="guest-form" method="POST" action="?/register" use:enhance>
@@ -158,7 +170,10 @@
               {#if questions.length}
                 <RegistrationFields {questions} />
               {/if}
-              <button class="rsvp-btn" type="submit">Register</button>
+              <div class="rsvp-actions">
+                <button class="rsvp-btn" type="submit">Register</button>
+                <Share {event} variant="ghost" />
+              </div>
               <div class="guest-hint">
                 Have an account? <a href="/login">Sign in</a>
               </div>

@@ -10,6 +10,13 @@ export const handle = async ({ event, resolve }) => {
     return session;
   };
 
+  event.locals.getUser = async () => {
+    const {
+      data: { user },
+    } = await event.locals.supabase.auth.getUser();
+    return user;
+  };
+
   return resolve(event, {
     filterSerializedResponseHeaders(name) {
       return name === "content-range" || name === "x-supabase-api-version";

@@ -1,32 +1,49 @@
+<svelte:head>
+  <title>sol</title>
+</svelte:head>
+
 <slot />
 
 <style>
   :global(:root) {
-    --bg: #0a0a0b;
-    --accent: #f5542d;
-    --accent-hover: #e0481f;
-    --card: rgba(255, 255, 255, 0.02);
-    --card-strong: rgba(255, 255, 255, 0.04);
+    --bg: #000000;
+    --accent: #ffffff;
+    --accent-hover: #f4f4f5;
+    --card: rgba(255, 255, 255, 0.03);
+    --card-strong: rgba(255, 255, 255, 0.06);
     --border: rgba(255, 255, 255, 0.1);
-    --border-soft: rgba(255, 255, 255, 0.08);
-    --text: #fff;
-    --text-dim: rgba(255, 255, 255, 0.82);
-    --text-muted: rgba(255, 255, 255, 0.5);
-    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --border-soft: rgba(255, 255, 255, 0.05);
+    --text: #ffffff;
+    --text-dim: #a1a1aa;
+    --text-muted: #71717a;
+    --font: 'Kumbh Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   :global(*) {
     box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   :global(body) {
     margin: 0;
     min-height: 100vh;
-    background:
-      radial-gradient(1200px 600px at 50% -10%, rgba(245, 84, 45, 0.13), transparent 60%),
-      var(--bg);
+    background: var(--bg);
     color: var(--text);
     font-family: var(--font);
-    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  :global(body::before) {
+    content: '';
+    position: fixed;
+    top: -10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100vw;
+    height: 60vh;
+    background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
   }
 </style>

@@ -9,6 +9,7 @@
   import Landing from '$lib/Landing.svelte'
   import { formatAnswer } from '$lib/formFields'
   import { marked } from 'marked'
+  import { googleCalendarUrl } from '$lib/calendar'
 
   let { data, form } = $props()
 
@@ -17,9 +18,15 @@
   let showCreateForm = $state(false)
   let expandedAttendees = $state({})
   let editDescriptions = $state({})
+  let openMenu = $state(null)
 
   function toggleAttendees(id) {
     expandedAttendees[id] = !expandedAttendees[id]
+  }
+
+  function eventUrl(slug) {
+    if (typeof window === 'undefined') return ''
+    return `${window.location.origin}/${slug}`
   }
 
   function attendeeName(a) {
@@ -115,14 +122,27 @@
     const endTime = e.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
     return `${date} · ${startTime} – ${endTime}`
   }
+  function tileDate(date) {
+    const d = new Date(date)
+    return { m: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(), d: d.getDate() }
+  }
 </script>
+
+<svelte:head>
+  <title>{data.landing ? 'sol' : 'Dashboard · sol'}</title>
+</svelte:head>
+
+<svelte:window onclick={() => openMenu = null} />
 
 {#if data.landing}
   <Landing />
 {:else}
 <div class="wrap">
   <header class="bar">
-    <h1>My Events</h1>
+    <div class="brand">
+      <img src="https://cdn.hackclub.com/019eb281-d75b-7e9b-9fef-14a777c3b4b8/sol.svg" alt="sol" class="logo" />
+      <h1>My Events</h1>
+    </div>
     <div class="bar-actions">
       {#if profile}
         <div class="user-chip">
@@ -199,7 +219,7 @@
 
   <div class="list">
     {#each data.events as event (event.id)}
-      <div class="panel">
+      <div class="panel" style="--card-bg: {event.background_color || '#0a0a0b'}; --card-accent: {event.accent_color || '#f5542d'}; --card-text: {event.text_color || '#ffffff'}">
         {#if editing === event.id}
           <form
             class="form-grid"
@@ -238,9 +258,9 @@
                     {@html marked(getEditDescription(event), { breaks: true })}
                   {:else}
                     <span class="md-empty">Nothing to preview yet…</span>
-                  {/if}
-                </div>
+                {/if}
               </div>
+            </div>
             </div>
 
             <label>Location <input name="location" value={event.location ?? ''} /></label>
@@ -281,29 +301,91 @@
           </form>
         {:else}
           <div class="event-display">
-            <div class="thumb">
-              {#if event.cover_image_url}
-                <img src={event.cover_image_url} alt={event.name} />
-              {:else}
-                <div class="thumb-fallback">{event.name[0]}</div>
-              {/if}
+            <div class="thumb-col">
+              <div class="thumb">
+                {#if event.cover_image_url}
+                  <img src={event.cover_image_url} alt={event.name} />
+                {:else}
+                  <div class="thumb-fallback" style="background: linear-gradient(135deg, var(--card-accent), color-mix(in srgb, var(--card-accent) 40%, #000));">{event.name[0]}</div>
+                {/if}
+              </div>
             </div>
             <div class="event-body">
               <div class="event-top">
                 <h2 class="event-name">{event.name}</h2>
-                <div class="badges">
-                  <span class="badge {event.is_public ? 'public' : 'private'}">
-                    {event.is_public ? 'Public' : 'Private'}
-                  </span>
-                  {#if event.is_public}
-                    <a class="slug" href="/{event.slug}" target="_blank">/{event.slug}</a>
-                  {/if}
+                <div class="event-top-right">
+                  <div class="badges">
+                    <span class="badge {event.is_public ? 'public' : 'private'}">
+                      {event.is_public ? 'Public' : 'Private'}
+                    </span>
+                    {#if event.is_public}
+                      <a class="slug" href="/{event.slug}" target="_blank">/{event.slug}</a>
+                    {/if}
+                  </div>
+                  <div class="menu-wrap">
+                    <button class="menu-btn" onclick={(e) => { e.stopPropagation(); openMenu = openMenu === event.id ? null : event.id }} aria-label="Event actions">···</button>
+                    {#if openMenu === event.id}
+                      <!-- svelte-ignore a11y_click_events_have_key_events -->
+                      <!-- svelte-ignore a11y_no_static_element_interactions -->
+                      <div class="menu-dropdown" onclick={(e) => e.stopPropagation()}>
+                        <button class="menu-item" onclick={() => { startEditing(event); openMenu = null }}>
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                          Edit
+                        </button>
+                        <a class="menu-item" href={googleCalendarUrl(event, eventUrl(event.slug))} target="_blank" rel="noopener" onclick={() => openMenu = null}>
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                          Google Calendar
+                        </a>
+                        <a class="menu-item" href="/{event.slug}/event.ics" download onclick={() => openMenu = null}>
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
+                          Download .ics
+                        </a>
+                        <button class="menu-item" onclick={() => { toggleAttendees(event.id); openMenu = null }}>
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                          Attendees ({(data.attendeesByEvent[event.id] ?? []).length})
+                        </button>
+                        <a class="menu-item" href="/{event.slug}/check-in" onclick={() => openMenu = null}>
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                          Check-in
+                        </a>
+                        <form method="POST" action="?/toggle_registration" use:enhance>
+                          <input type="hidden" name="id" value={event.id} />
+                          <button class="menu-item" type="submit" onclick={() => openMenu = null}>
+                            {#if event.registration_open}
+                              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                              Close RSVPs
+                            {:else}
+                              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                              Open RSVPs
+                            {/if}
+                          </button>
+                        </form>
+                        <div class="menu-divider"></div>
+                        <form method="POST" action="?/delete" use:enhance>
+                          <input type="hidden" name="id" value={event.id} />
+                          <button class="menu-item del" type="submit" onclick={() => openMenu = null}>
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            Delete
+                          </button>
+                        </form>
+                      </div>
+                    {/if}
+                  </div>
                 </div>
               </div>
-              <div class="meta-line">📅 {formatEventDate(event.start_time, event.end_time)}</div>
-              {#if event.location}<div class="meta-line">📍 {event.location}</div>{/if}
-              {#if event.max_attendees}<div class="meta-line">👥 Max {event.max_attendees} attendees</div>{/if}
-
+              {#if event.location}
+                <div class="meta-line">
+                  <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {event.location}
+                </div>
+              {/if}
+              <div class="meta-line">
+                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                {formatEventDate(event.start_time, event.end_time)}
+              </div>
+              {#if event.max_attendees}
+                <div class="meta-line">👥 Max {event.max_attendees} attendees</div>
+              {/if}
               <div class="event-actions">
                 <button class="sm" onclick={() => startEditing(event)}>Edit</button>
                 <AddToCalendar {event} />
@@ -396,25 +478,66 @@
     </header>
     <div class="list">
       {#each data.registeredEvents as event (event.id)}
-        <div class="panel">
+        <div class="panel" style="--card-bg: {event.background_color || '#0a0a0b'}; --card-accent: {event.accent_color || '#f5542d'}; --card-text: {event.text_color || '#ffffff'}">
           <div class="event-display">
-            <div class="thumb">
-              {#if event.cover_image_url}
-                <img src={event.cover_image_url} alt={event.name} />
-              {:else}
-                <div class="thumb-fallback">{event.name[0]}</div>
-              {/if}
+            <div class="thumb-col">
+              <div class="thumb">
+                {#if event.cover_image_url}
+                  <img src={event.cover_image_url} alt={event.name} />
+                {:else}
+                  <div class="thumb-fallback" style="background: linear-gradient(135deg, var(--card-accent), color-mix(in srgb, var(--card-accent) 40%, #000));">{event.name[0]}</div>
+                {/if}
+              </div>
             </div>
             <div class="event-body">
               <div class="event-top">
                 <h2 class="event-name">{event.name}</h2>
-                <div class="badges">
-                  <span class="badge public">Registered</span>
-                  <a class="slug" href="/{event.slug}" target="_blank">/{event.slug}</a>
+                <div class="event-top-right">
+                  <div class="badges">
+                    <span class="badge public">Registered</span>
+                    <a class="slug" href="/{event.slug}" target="_blank">/{event.slug}</a>
+                  </div>
+                  <div class="menu-wrap">
+                    <button class="menu-btn" onclick={(e) => { e.stopPropagation(); openMenu = openMenu === event.id ? null : event.id }} aria-label="Event actions">···</button>
+                    {#if openMenu === event.id}
+                      <!-- svelte-ignore a11y_click_events_have_key_events -->
+                      <!-- svelte-ignore a11y_no_static_element_interactions -->
+                      <div class="menu-dropdown" onclick={(e) => e.stopPropagation()}>
+                        <a class="menu-item" href="/{event.slug}" onclick={() => openMenu = null}>
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          View
+                        </a>
+                        <a class="menu-item" href={googleCalendarUrl(event, eventUrl(event.slug))} target="_blank" rel="noopener" onclick={() => openMenu = null}>
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                          Google Calendar
+                        </a>
+                        <a class="menu-item" href="/{event.slug}/event.ics" download onclick={() => openMenu = null}>
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
+                          Download .ics
+                        </a>
+                        <div class="menu-divider"></div>
+                        <form method="POST" action="?/cancel_registration" use:enhance>
+                          <input type="hidden" name="event_id" value={event.id} />
+                          <button class="menu-item del" type="submit" onclick={() => openMenu = null}>
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                            Cancel RSVP
+                          </button>
+                        </form>
+                      </div>
+                    {/if}
+                  </div>
                 </div>
               </div>
-              <div class="meta-line">📅 {formatEventDate(event.start_time, event.end_time)}</div>
-              {#if event.location}<div class="meta-line">📍 {event.location}</div>{/if}
+              {#if event.location}
+                <div class="meta-line">
+                  <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {event.location}
+                </div>
+              {/if}
+              <div class="meta-line">
+                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                {formatEventDate(event.start_time, event.end_time)}
+              </div>
               <div class="event-actions">
                 <a class="sm" href="/{event.slug}">View</a>
                 <AddToCalendar {event} />
@@ -445,6 +568,16 @@
     justify-content: space-between;
     margin-bottom: 28px;
   }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    width: 28px;
+    height: 28px;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
+  }
   .bar h1 {
     font-size: 26px;
     font-weight: 700;
@@ -473,74 +606,133 @@
   }
 
   .primary {
-    background: var(--accent);
-    color: #fff;
+    background: #fff;
+    color: #000;
     border: none;
-    border-radius: 9px;
+    border-radius: 4px;
     padding: 9px 16px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: transform 0.15s;
   }
   .primary:hover {
-    background: var(--accent-hover);
+    transform: scale(1.02);
   }
   .submit {
     align-self: flex-start;
   }
   .ghost {
-    background: rgba(255, 255, 255, 0.06);
+    background: transparent;
     color: var(--text-dim);
     border: 1px solid var(--border-soft);
-    border-radius: 9px;
+    border-radius: 4px;
     padding: 9px 16px;
     font-size: 14px;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: all 0.15s;
   }
   .ghost:hover {
-    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--border);
     color: #fff;
   }
-  .sm {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--text-dim);
-    border: 1px solid var(--border-soft);
-    border-radius: 8px;
-    padding: 6px 13px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-    text-decoration: none;
+  .menu-wrap {
+    position: relative;
     display: inline-flex;
-    align-items: center;
+  }
+  .menu-btn {
+    background: none;
+    border: none;
+    color: var(--card-text, #fff);
+    opacity: 0.3;
+    font-size: 18px;
+    letter-spacing: 2px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
     font-family: inherit;
   }
-  .sm:hover {
-    background: rgba(255, 255, 255, 0.1);
+  .menu-btn:hover {
+    opacity: 0.7;
+    background: color-mix(in srgb, var(--card-text, #fff) 8%, transparent);
+  }
+  .menu-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 30;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    border-radius: 10px;
+    background: #18181b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: inherit;
+    color: rgba(255, 255, 255, 0.82);
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-align: left;
+    width: 100%;
+    transition: background 0.12s, color 0.12s;
+  }
+  .menu-item:hover {
+    background: rgba(255, 255, 255, 0.08);
     color: #fff;
   }
-  .del:hover {
-    background: rgba(245, 84, 45, 0.15);
-    border-color: rgba(245, 84, 45, 0.4);
-    color: #ff8b6f;
+  .menu-item .icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+  .meta-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    opacity: 0.5;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+  .menu-item.del:hover {
+    background: rgba(255, 0, 0, 0.1);
+    color: #ff4444;
+  }
+  .menu-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 4px 0;
   }
 
   .panel {
-    border: 1px solid var(--border);
-    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--card-accent, var(--accent)) 15%, transparent);
+    border-radius: 10px;
     padding: 20px;
-    background: var(--card);
+    background: color-mix(in srgb, var(--card-bg, #0a0a0b) 70%, #000);
     margin-bottom: 28px;
+    transition: all 0.25s ease;
   }
   .list .panel {
     margin-bottom: 0;
-    transition: border-color 0.15s, background 0.15s;
   }
   .list .panel:hover {
-    border-color: rgba(255, 255, 255, 0.18);
-    background: var(--card-strong);
+    border-color: color-mix(in srgb, var(--card-accent, var(--accent)) 30%, transparent);
+    background: color-mix(in srgb, var(--card-bg, #0a0a0b) 85%, #000);
+    box-shadow: 0 0 30px color-mix(in srgb, var(--card-accent, var(--accent)) 8%, transparent);
   }
   .list {
     display: flex;
@@ -724,13 +916,19 @@
     font-size: 13px;
   }
 
+  .thumb-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+  }
   .event-display {
     display: flex;
-    gap: 16px;
+    gap: 20px;
   }
   .thumb {
-    width: 84px;
-    height: 84px;
+    width: 100px;
+    height: 100px;
     border-radius: 10px;
     overflow: hidden;
     flex-shrink: 0;
@@ -747,16 +945,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
+    font-size: 34px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.3);
   }
   .event-body {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
   }
   .event-top {
     display: flex;
@@ -764,10 +962,18 @@
     justify-content: space-between;
     gap: 12px;
   }
+  .event-top-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
   .event-name {
-    font-size: 17px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
     margin: 0;
+    letter-spacing: -0.01em;
+    color: var(--card-text, #fff);
   }
   .badges {
     display: flex;
@@ -777,41 +983,41 @@
   }
   .badge {
     font-size: 11px;
+    font-weight: 600;
     padding: 3px 9px;
     border-radius: 999px;
   }
   .badge.public {
-    background: rgba(245, 84, 45, 0.15);
-    color: #ff8b6f;
+    background: color-mix(in srgb, var(--card-accent, #f5542d) 15%, transparent);
+    color: var(--card-accent, #ff8b6f);
   }
   .badge.private {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text-muted);
+    background: color-mix(in srgb, var(--card-text, #fff) 8%, transparent);
+    color: color-mix(in srgb, var(--card-text, #fff) 50%, transparent);
   }
   .slug {
     font-size: 12px;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    color: var(--text-muted);
+    color: var(--card-text, #fff);
+    opacity: 0.4;
     text-decoration: none;
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--card-text, #fff) 5%, transparent);
     padding: 3px 8px;
     border-radius: 6px;
-    transition: color 0.15s;
+    transition: opacity 0.15s;
   }
   .slug:hover {
-    color: #fff;
+    opacity: 0.7;
   }
   .meta-line {
     font-size: 13px;
-    color: var(--text-muted);
+    color: var(--card-text, #fff);
+    opacity: 0.5;
   }
-  .event-actions {
+  .form-grid .event-actions {
     display: flex;
     gap: 8px;
-    margin-top: 8px;
-  }
-  .event-actions form {
-    display: inline-flex;
+    margin-top: 4px;
   }
 
   .attendees {
@@ -1013,6 +1219,10 @@
     }
     .event-display {
       flex-direction: column;
+    }
+    .thumb-col {
+      flex-direction: row;
+      align-items: center;
     }
     .thumb {
       width: 100%;

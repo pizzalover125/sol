@@ -50,9 +50,15 @@
   }
 </script>
 
+<svelte:head>
+  <title>{mode === 'signin' ? 'Sign In' : 'Sign Up'} · sol</title>
+</svelte:head>
+
 <div class="auth-page">
   <div class="auth-card">
-    <div class="logo">●</div>
+    <div class="logo-wrap">
+      <img src="https://cdn.hackclub.com/019eb281-d75b-7e9b-9fef-14a777c3b4b8/sol.svg" alt="sol" class="logo" />
+    </div>
     <h1>{mode === 'signin' ? 'Welcome back' : 'Create your account'}</h1>
     <p class="sub">
       {mode === 'signin'
@@ -99,31 +105,38 @@
   .auth-card {
     width: 100%;
     max-width: 380px;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 32px;
-    background: var(--card);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 40px 32px;
+    background: rgba(255, 255, 255, 0.02);
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
+  }
+  .logo-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
   }
   .logo {
-    font-size: 22px;
-    color: var(--accent);
-    text-align: center;
+    width: 32px;
+    height: 32px;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
   }
   h1 {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.04em;
     text-align: center;
     margin: 0;
+    color: #fff;
   }
   .sub {
     font-size: 14px;
-    color: var(--text-muted);
+    color: var(--text-dim);
     text-align: center;
-    margin: 0 0 8px;
+    margin: 0 0 12px;
+    line-height: 1.5;
   }
   .row {
     display: flex;
@@ -135,19 +148,21 @@
   }
   input {
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 11px 13px;
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 12px 14px;
     color: #fff;
     font-size: 14px;
     font-family: inherit;
+    transition: all 0.2s;
   }
   input:focus {
     outline: none;
-    border-color: var(--accent);
+    border-color: var(--border);
+    background: rgba(255, 255, 255, 0.05);
   }
   input::placeholder {
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-muted);
   }
   .hint {
     font-size: 12px;
@@ -155,21 +170,22 @@
     margin: -6px 0 0;
   }
   .primary {
-    background: var(--accent);
-    color: #fff;
+    background: #fff;
+    color: #000;
     border: none;
-    border-radius: 9px;
-    padding: 12px;
+    border-radius: 4px;
+    padding: 13px;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: transform 0.15s;
+    margin-top: 8px;
   }
   .primary:hover:not(:disabled) {
-    background: var(--accent-hover);
+    transform: scale(1.02);
   }
   .primary:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: default;
   }
   .text-btn {
@@ -178,19 +194,24 @@
     color: var(--text-muted);
     font-size: 14px;
     cursor: pointer;
-    margin-top: 2px;
+    margin-top: 4px;
+    transition: color 0.15s;
+  }
+  .text-btn:hover {
+    color: var(--text-dim);
   }
   .text-btn span {
-    color: var(--accent);
+    color: #fff;
     font-weight: 600;
   }
   .error {
-    background: rgba(245, 84, 45, 0.12);
-    border: 1px solid rgba(245, 84, 45, 0.4);
-    color: #ffb3a0;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 14px;
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.2);
+    color: #ff4444;
+    padding: 12px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
   }
 </style>
 

@@ -24,7 +24,9 @@
 
 <div class="page">
   <nav class="nav">
-    <a class="logo" href="/">●</a>
+    <a class="logo" href="/">
+      <img src="https://cdn.hackclub.com/019eb281-d75b-7e9b-9fef-14a777c3b4b8/sol.svg" alt="sol" class="logo-img" />
+    </a>
     <span class="nav-title">Check-in · {data.event.name}</span>
     <a class="back-link" href="/{data.event.slug}">Event Page</a>
   </nav>
@@ -111,7 +113,7 @@
     margin: 0;
     background: #0a0a0b;
     color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-family: var(--font);
   }
   .page {
     min-height: 100vh;
@@ -125,9 +127,14 @@
     padding: 18px 24px;
   }
   .logo {
-    color: #fff;
-    font-size: 18px;
+    display: flex;
+    align-items: center;
     text-decoration: none;
+  }
+  .logo-img {
+    width: 20px;
+    height: 20px;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
   }
   .nav-title {
     font-size: 14px;
@@ -182,11 +189,11 @@
   }
   .input-row input:focus {
     outline: none;
-    border-color: #f5542d;
+    border-color: #fff;
   }
   .primary {
-    background: #f5542d;
-    color: #fff;
+    background: #fff;
+    color: #000;
     border: none;
     border-radius: 9px;
     padding: 10px 16px;

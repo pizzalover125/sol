@@ -1,6 +1,8 @@
 <script> 
   import { marked } from 'marked'
   import { enhance } from '$app/forms'
+  import { supabase } from '$lib/supabase'
+  import { goto } from '$app/navigation'
   import Avatar from '$lib/Avatar.svelte'
   import RegistrationFields from '$lib/RegistrationFields.svelte'
   import AddToCalendar from '$lib/AddToCalendar.svelte'
@@ -10,6 +12,11 @@
   // svelte-ignore state_referenced_locally
   const { event } = data
   let viewer = $derived(data.viewer)
+
+  async function signOut() {
+    await supabase.auth.signOut()
+    goto('/login')
+  }
   const questions = event.registration_questions ?? []
   let attendeeCount = $derived(data.attendeeCount)
   let isRegistered = $derived(data.isRegistered)
@@ -53,13 +60,16 @@
 
 <div class="page" style="--page-bg: {event.background_color || '#0a0a0b'}; --page-text: {event.text_color || '#ffffff'}; --page-accent: {event.accent_color || '#f5542d'}">
   <nav class="nav">
-    <a class="logo" href="/">●</a>
+    <a class="logo" href="/">
+      <img src="https://cdn.hackclub.com/019eb281-d75b-7e9b-9fef-14a777c3b4b8/sol.svg" alt="sol" class="logo-img" />
+    </a>
     <div class="nav-right">
       {#if viewer}
         <a class="user-chip" href="/">
           <Avatar firstName={viewer.first_name} lastName={viewer.last_name} url={viewer.avatar_url} size={28} />
           <span class="user-name">{viewer.first_name} {viewer.last_name}</span>
         </a>
+        <button class="signout-btn" onclick={signOut}>Sign Out</button>
       {:else}
         <a href="/login" class="signin">Sign In</a>
       {/if}
@@ -253,7 +263,7 @@
       radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, var(--page-accent) 13%, transparent), transparent 60%),
       var(--page-bg, #0a0a0b);
     color: var(--page-text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-family: var(--font);
     -webkit-font-smoothing: antialiased;
   }
 
@@ -266,9 +276,14 @@
     padding: 18px 24px;
   }
   .logo {
-    color: var(--page-text);
-    font-size: 18px;
+    display: flex;
+    align-items: center;
     text-decoration: none;
+  }
+  .logo-img {
+    width: 22px;
+    height: 22px;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
   }
   .nav-right {
     display: flex;
@@ -287,6 +302,20 @@
     background: color-mix(in srgb, var(--page-text) 8%, transparent);
     padding: 7px 14px;
     border-radius: 8px;
+  }
+  .signout-btn {
+    background: none;
+    border: none;
+    color: color-mix(in srgb, var(--page-text) 45%, transparent);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s;
+    font-family: inherit;
+  }
+  .signout-btn:hover {
+    color: var(--page-text);
   }
   .user-chip {
     display: flex;

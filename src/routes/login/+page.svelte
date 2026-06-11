@@ -28,6 +28,7 @@
       email,
       password,
       options: {
+        emailRedirectTo: window.location.origin,
         data: {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
